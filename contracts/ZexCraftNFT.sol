@@ -7,17 +7,25 @@ import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0
 import "@chainlink/contracts/src/v0.8/vrf/VRFV2WrapperConsumerBase.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-
-contract NounsZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, FunctionsClient, ConfirmedOwner {
+import "./interfaces/IRelationshipRegistry.sol";
+contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, FunctionsClient, ConfirmedOwner {
   using Strings for uint256;
   using FunctionsRequest for FunctionsRequest.Request;
 
   enum Status {
     DOES_NOT_EXIST,
-    REQUESTED,
-    NOUN_CREATED,
-    ZEXNOUN_REQUESTED,
+    VRF_REQUESTED,
+    NFT_REQUESTED,
+    FUNCTIONS_REQUESTED,
     MINTED
+  }
+
+  struct NFT{
+    uint256 tokenId;
+    string tokenURI;
+    address ownerDuringMint;
+    address contractAddress;
+    uint256 chainId;
   }
 
   struct RequestStatus {
@@ -26,9 +34,8 @@ contract NounsZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase,
     uint256 randomWord;
   }
 
-  struct NewZexNounRequest {
+  struct NewZexCraftNftRequest {
     string prompt;
-    string nounUri;
     string tokenUri;
     uint256 requestId;
     uint256 tokenId;
@@ -37,15 +44,15 @@ contract NounsZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase,
     Status status;
   }
 
-  struct BabyZexNounRequest {
-    uint256 nounTokenId;
-    uint256 chainId;
-    address tokenAddress;
-    string tokenUri;
+  struct BabyZexCraftNftRequest {
+    NFT nft1;
+    NFT nft2;
     uint256 tokenId;
+    string tokenUri;
     uint256 randomness;
-    address creator;
+    address relationship;
     Status status;
+    
   }
 
   // Chainlink Functions Variables
@@ -56,14 +63,16 @@ contract NounsZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase,
   bytes public s_lastError;
   uint32 public s_callbackGasLimit;
   string public sourceCode;
+  uint256 public tokenIdCounter;
+  mapping(uint256=>uint256) public tokenIdToZexCraftNftRequest;
 
   // ZexCraftNFT Variables
-  address public relRegisty;
+  IRelationshipRegistry public relRegisty;
   uint256 public mintFee;
   address public linkAddress;
   address public wrapperAddress;
-  mapping(uint256 => NewZexNounRequest) public newZexNounRequests;
-  mapping(uint256 => BabyZexNounRequest) public babyZexNounRequests;
+  mapping(uint256 => NewZexCraftNftRequest) public newZexCraftNftRequests;
+  mapping(uint256 => BabyZexCraftNftRequest) public babyZexCraftNftRequests;
   mapping(bytes32 => uint256) public functionToVRFRequest;
 
   // Chainlink VRF Variables
@@ -77,17 +86,22 @@ contract NounsZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase,
   uint16 public constant requestConfirmations = 3;
   uint32 public constant numWords = 1;
 
+
+  // Chainlink CCIP Variables
+  address public crossChainRouterAddress;
+
   constructor(
     address _linkAddress,
     address _wrapperAddress,
     address router,
     bytes32 _donId,
-    address _relRegisty,
+    IRelationshipRegistry _relRegisty,
     string memory _sourceCode,
     uint32 _callbackGasLimit,
-    uint256 _mintFee
+    uint256 _mintFee,
+    address _crossChainRouterAddress
   )
-    ERC721("ZexNouns", "ZNOUNS")
+    ERC721("ZexCraft", "ZCT")
     FunctionsClient(router)
     VRFV2WrapperConsumerBase(_linkAddress, _wrapperAddress)
     ConfirmedOwner(msg.sender)
@@ -99,19 +113,24 @@ contract NounsZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase,
     mintFee = _mintFee;
     linkAddress = _linkAddress;
     wrapperAddress = _wrapperAddress;
+    crossChainRouterAddress = _crossChainRouterAddress;
   }
 
   event OracleReturned(bytes32 requestId, bytes response, bytes error);
   event RequestSent(uint256 requestId, uint32 numWords);
-  event RequestFulfilled(uint256 requestId, uint256[] randomWords, uint256 payment, string nounUri);
+  event RequestFulfilled(uint256 requestId, uint256[] randomWords, uint256 payment);
   event ZexCraftNewNFTCreated(uint256 tokenId, string prompt, string tokenUri, address owner);
 
-  modifier onlyRelRegistry() {
-    require(msg.sender == relRegisty, "only rel registry");
+  modifier onlyRelationshipOrCrosschain() {
+    require(relRegisty.isRelationship(msg.sender)||msg.sender==crossChainRouterAddress, "only relationship");
     _;
   }
 
-  function createNewZexCraftNft(string memory prompt) public payable onlyOwner returns (uint256 requestId) {
+  function createNewZexCraftNft(string memory prompt) public payable returns (uint256 requestId) {
+    return _createNewZexCraftNft(prompt);
+  }
+
+  function _createNewZexCraftNft(string memory prompt) internal onlyOwner returns (uint256 requestId) {
     requestId = requestRandomness(v_callbackGasLimit, requestConfirmations, numWords);
     s_requests[requestId] = RequestStatus({
       paid: VRF_V2_WRAPPER.calculateRequestPrice(v_callbackGasLimit),
@@ -121,25 +140,22 @@ contract NounsZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase,
     requestIds.push(requestId);
     lastRequestId = requestId;
     emit RequestSent(requestId, numWords);
-    newZexNounRequests[requestId] = NewZexNounRequest({
+    newZexCraftNftRequests[requestId] = NewZexCraftNftRequest({
       prompt: prompt,
-      nounUri: "",
       tokenUri: "",
       requestId: requestId,
       randomness: 0,
       tokenId: 0,
       creator: msg.sender,
-      status: Status.REQUESTED
+      status: Status.VRF_REQUESTED
     });
     return requestId;
   }
 
   function createBabyZexCraftNft(
-    uint nounTokenId,
-    uint chainId,
-    address tokenAddress,
-    uint tokenId
-  ) public onlyRelRegistry returns (uint256 requestId) {
+    NFT memory nft1,
+    NFT memory nft2
+  ) public onlyRelationshipOrCrosschain returns (uint256 requestId) {
     requestId = requestRandomness(v_callbackGasLimit, requestConfirmations, numWords);
     s_requests[requestId] = RequestStatus({
       paid: VRF_V2_WRAPPER.calculateRequestPrice(v_callbackGasLimit),
@@ -149,15 +165,14 @@ contract NounsZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase,
     requestIds.push(requestId);
     lastRequestId = requestId;
     emit RequestSent(requestId, numWords);
-    babyZexNounRequests[requestId] = BabyZexNounRequest({
-      nounTokenId: nounTokenId,
-      chainId: chainId,
-      tokenAddress: tokenAddress,
-      tokenId: tokenId,
-      randomness: 0,
-      tokenUri: "",
-      creator: msg.sender,
-      status: Status.REQUESTED
+    babyZexCraftNftRequests[requestId] = BabyZexCraftNftRequest({
+    nft1: nft1,
+    nft2: nft2,
+    tokenId:0,
+     tokenUri:"",
+     randomness:0,
+    relationship:msg.sender,
+      status: Status.VRF_REQUESTED
     });
     return requestId;
   }
@@ -168,40 +183,15 @@ contract NounsZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase,
     s_requests[_requestId].fulfilled = true;
     s_requests[_requestId].randomWord = randomWord;
 
-    if (newZexNounRequests[_requestId].status == Status.REQUESTED) {
-      string memory background = (randomWord % 2).toString();
-      randomWord /= 10;
-      string memory body = (randomWord % 30).toString();
-      randomWord /= 100;
-      string memory head = (randomWord % 234).toString();
-      randomWord /= 1000;
-      string memory accessory = (randomWord % 137).toString();
-      randomWord /= 1000;
-      string memory glasses = (randomWord % 21).toString();
-      randomWord /= 100;
-
-      string memory nounUri = string(
-        abi.encodePacked(
-          "https://noun-api.com/beta/pfp?head=",
-          head,
-          "&glasses=",
-          glasses,
-          "&background=",
-          background,
-          "&body=",
-          body,
-          "&accessory=",
-          accessory
-        )
-      );
-      newZexNounRequests[_requestId].nounUri = nounUri;
-      newZexNounRequests[_requestId].randomness = randomWord % 100;
-      newZexNounRequests[_requestId].status = Status.ZEXNOUN_REQUESTED;
-      newZexNounRequests[_requestId].tokenId = uint256(keccak256(abi.encodePacked(nounUri)));
-      emit RequestFulfilled(_requestId, _randomWords, s_requests[_requestId].paid, nounUri);
-    } else {
-      babyZexNounRequests[_requestId].randomness = randomWord % 100;
-      emit RequestFulfilled(_requestId, _randomWords, s_requests[_requestId].paid, "");
+    if (newZexCraftNftRequests[_requestId].status == Status.VRF_REQUESTED) {
+     
+      newZexCraftNftRequests[_requestId].randomness = randomWord % 100;
+      newZexCraftNftRequests[_requestId].status = Status.NFT_REQUESTED;
+      emit RequestFulfilled(_requestId, _randomWords, s_requests[_requestId].paid);
+    } else{
+      babyZexCraftNftRequests[_requestId].randomness = randomWord % 100;
+      babyZexCraftNftRequests[_requestId].status = Status.NFT_REQUESTED;
+      emit RequestFulfilled(_requestId, _randomWords, s_requests[_requestId].paid);
     }
   }
 
@@ -213,17 +203,20 @@ contract NounsZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase,
     string[] memory args,
     bytes[] calldata bytesArgs,
     uint64 subscriptionId
-  ) public {
-    require(babyZexNounRequests[_requestId].status == Status.ZEXNOUN_REQUESTED, "request not found");
-    require(msg.sender == babyZexNounRequests[_requestId].creator, "not creator");
+  ) public onlyRelationshipOrCrosschain {
+    require(babyZexCraftNftRequests[_requestId].status == Status.NFT_REQUESTED, "request not found");
+    require(msg.sender == babyZexCraftNftRequests[_requestId].relationship, "not creator");
     args[0] = "BREEDING";
-    args[1] = babyZexNounRequests[_requestId].tokenId.toString();
-    args[2] = tokenURI(babyZexNounRequests[_requestId].nounTokenId);
-    args[3] = babyZexNounRequests[_requestId].chainId.toString();
-    args[4] = uint256(uint160(babyZexNounRequests[_requestId].tokenAddress)).toHexString(20);
-    args[5] = babyZexNounRequests[_requestId].tokenId.toString();
-    args[6] = babyZexNounRequests[_requestId].randomness.toString();
-    args[7] = seed;
+    args[1] = babyZexCraftNftRequests[_requestId].nft1.tokenId.toString();
+    args[2] = babyZexCraftNftRequests[_requestId].nft1.tokenURI;
+    args[3] = babyZexCraftNftRequests[_requestId].nft1.chainId.toString();
+    args[4] = uint256(uint160(babyZexCraftNftRequests[_requestId].nft1.contractAddress)).toHexString(20);
+    args[5] = babyZexCraftNftRequests[_requestId].nft2.tokenId.toString();
+    args[6] = babyZexCraftNftRequests[_requestId].nft2.tokenURI;
+    args[7] = babyZexCraftNftRequests[_requestId].nft2.chainId.toString();
+    args[8] = uint256(uint160(babyZexCraftNftRequests[_requestId].nft2.contractAddress)).toHexString(20);
+    args[9] = babyZexCraftNftRequests[_requestId].randomness.toString();
+    args[10] = seed;
     FunctionsRequest.Request memory req;
     req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode);
     req.secretsLocation = secretsLocation;
@@ -236,6 +229,7 @@ contract NounsZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase,
     }
     s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, s_callbackGasLimit, donId);
     functionToVRFRequest[s_lastRequestId] = _requestId;
+    babyZexCraftNftRequests[_requestId].status = Status.FUNCTIONS_REQUESTED;
   }
 
   function mintNewZexCraftNft(
@@ -247,14 +241,12 @@ contract NounsZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase,
     bytes[] calldata bytesArgs,
     uint64 subscriptionId
   ) public {
-    require(newZexNounRequests[_requestId].status == Status.NOUN_CREATED, "request not found");
-    require(msg.sender == newZexNounRequests[_requestId].creator, "not creator");
+    require(newZexCraftNftRequests[_requestId].status == Status.NFT_REQUESTED, "request not found");
+    require(msg.sender == newZexCraftNftRequests[_requestId].creator, "not creator");
     args[0] = "NEW_BORN";
-    args[1] = newZexNounRequests[_requestId].tokenId.toString();
-    args[2] = newZexNounRequests[_requestId].prompt;
-    args[3] = newZexNounRequests[_requestId].nounUri;
-    args[4] = newZexNounRequests[_requestId].randomness.toString();
-    args[5] = seed;
+    args[2] = newZexCraftNftRequests[_requestId].prompt;
+    args[3] = newZexCraftNftRequests[_requestId].randomness.toString();
+    args[4] = seed;
     FunctionsRequest.Request memory req;
     req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode);
     req.secretsLocation = secretsLocation;
@@ -267,6 +259,7 @@ contract NounsZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase,
     }
     s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, s_callbackGasLimit, donId);
     functionToVRFRequest[s_lastRequestId] = _requestId;
+    newZexCraftNftRequests[_requestId].status = Status.FUNCTIONS_REQUESTED;
   }
 
   function getRequestStatus(
@@ -290,29 +283,30 @@ contract NounsZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase,
    * Either response or error parameter will be set, but never both
    */
   function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory err) internal override {
-    if (err.length > 0) {
-      emit OracleReturned(requestId, response, err);
-      return;
-    } else {
+    if (!(err.length > 0)) {
+      uint256 _tokenIdCounter=tokenIdCounter;
       uint256 _requestId = functionToVRFRequest[requestId];
-      if (newZexNounRequests[_requestId].status == Status.ZEXNOUN_REQUESTED) {
+      if (newZexCraftNftRequests[_requestId].status == Status.FUNCTIONS_REQUESTED) {
         string memory tokenUri = abi.decode(response, (string));
-        newZexNounRequests[_requestId].tokenUri = tokenUri;
-        newZexNounRequests[_requestId].status = Status.MINTED;
-        uint256 tokenId = newZexNounRequests[_requestId].tokenId;
-        _safeMint(msg.sender, tokenId);
-        _setTokenURI(tokenId, tokenUri);
+        newZexCraftNftRequests[_requestId].tokenId= _tokenIdCounter;
+        newZexCraftNftRequests[_requestId].tokenUri = tokenUri;
+        newZexCraftNftRequests[_requestId].status = Status.MINTED;
+        _safeMint(msg.sender, _tokenIdCounter);
+        _setTokenURI(_tokenIdCounter, tokenUri);
+        tokenIdCounter+=1;
       } else {
         string memory tokenUri = abi.decode(response, (string));
-        babyZexNounRequests[_requestId].tokenUri = tokenUri;
-        babyZexNounRequests[_requestId].status = Status.MINTED;
-        uint256 tokenId = babyZexNounRequests[_requestId].tokenId;
-        _safeMint(msg.sender, tokenId);
-        _setTokenURI(tokenId, tokenURI(babyZexNounRequests[_requestId].nounTokenId));
+        babyZexCraftNftRequests[_requestId].tokenUri = tokenUri;
+        babyZexCraftNftRequests[_requestId].status = Status.MINTED;
+        babyZexCraftNftRequests[_requestId].tokenId=_tokenIdCounter;
+        _safeMint(msg.sender, _tokenIdCounter);
+        _setTokenURI(_tokenIdCounter, tokenUri);
+        tokenIdCounter+=1;
       }
     }
     s_lastResponse = response;
     s_lastError = err;
+      emit OracleReturned(requestId, response, err);
   }
 
   /**

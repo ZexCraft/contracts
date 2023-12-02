@@ -7,7 +7,7 @@
 // Loads environment variables from .env.enc file (if it exists)
 require("@chainlink/env-enc").config()
 
-const DEFAULT_VERIFICATION_BLOCK_CONFIRMATIONS = 2
+const DEFAULT_VERIFICATION_BLOCK_CONFIRMATIONS = 3
 
 const npmCommand = process.env.npm_lifecycle_event
 const isTestEnvironment = npmCommand == "test" || npmCommand == "test:unit"

@@ -34,25 +34,15 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
     uint256 randomWord;
   }
 
-  struct NewZexCraftNftRequest {
+  struct ZexCraftNftRequest {
+    NFT nft1;
+    NFT nft2;
     string prompt;
-    string tokenUri;
     uint256 requestId;
     uint256 tokenId;
     uint256 randomness;
-    address creator;
+    address owner;
     Status status;
-  }
-
-  struct BabyZexCraftNftRequest {
-    NFT nft1;
-    NFT nft2;
-    uint256 tokenId;
-    string tokenUri;
-    uint256 randomness;
-    address relationship;
-    Status status;
-    
   }
 
   // Chainlink Functions Variables
@@ -71,8 +61,7 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
   uint256 public mintFee;
   address public linkAddress;
   address public wrapperAddress;
-  mapping(uint256 => NewZexCraftNftRequest) public newZexCraftNftRequests;
-  mapping(uint256 => BabyZexCraftNftRequest) public babyZexCraftNftRequests;
+  mapping(uint256 => ZexCraftNftRequest) public zexCraftNftRequests;
   mapping(bytes32 => uint256) public functionToVRFRequest;
 
   // Chainlink VRF Variables
@@ -88,7 +77,7 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
 
 
   // Chainlink CCIP Variables
-  address public crossChainRouterAddress;
+  address public crossChainAddress;
 
   constructor(
     address _linkAddress,
@@ -99,7 +88,7 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
     string memory _sourceCode,
     uint32 _callbackGasLimit,
     uint256 _mintFee,
-    address _crossChainRouterAddress
+    address _crossChainAddress
   )
     ERC721("ZexCraft", "ZCT")
     FunctionsClient(router)
@@ -113,24 +102,26 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
     mintFee = _mintFee;
     linkAddress = _linkAddress;
     wrapperAddress = _wrapperAddress;
-    crossChainRouterAddress = _crossChainRouterAddress;
+    crossChainAddress = _crossChainAddress;
+    tokenIdCounter = 1;
   }
 
   event OracleReturned(bytes32 requestId, bytes response, bytes error);
   event RequestSent(uint256 requestId, uint32 numWords);
   event RequestFulfilled(uint256 requestId, uint256[] randomWords, uint256 payment);
-  event ZexCraftNewNFTCreated(uint256 tokenId, string prompt, string tokenUri, address owner);
+  event ZexCraftNFTCreated(uint256 tokenId, string prompt, string tokenUri, address owner);
 
   modifier onlyRelationshipOrCrosschain() {
-    require(relRegisty.isRelationship(msg.sender)||msg.sender==crossChainRouterAddress, "only relationship");
+    require(relRegisty.isRelationship(msg.sender)||msg.sender==crossChainAddress, "only relationship");
     _;
   }
 
-  function createNewZexCraftNft(string memory prompt) public payable returns (uint256 requestId) {
+  function createNewZexCraftNft(string memory prompt) external payable returns (uint256 requestId) {
+    // TODO: add Mint Fee filtering
     return _createNewZexCraftNft(prompt);
   }
 
-  function _createNewZexCraftNft(string memory prompt) internal onlyOwner returns (uint256 requestId) {
+  function _createNewZexCraftNft(string memory prompt) internal returns (uint256 requestId) {
     requestId = requestRandomness(v_callbackGasLimit, requestConfirmations, numWords);
     s_requests[requestId] = RequestStatus({
       paid: VRF_V2_WRAPPER.calculateRequestPrice(v_callbackGasLimit),
@@ -140,13 +131,26 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
     requestIds.push(requestId);
     lastRequestId = requestId;
     emit RequestSent(requestId, numWords);
-    newZexCraftNftRequests[requestId] = NewZexCraftNftRequest({
+    zexCraftNftRequests[requestId] = ZexCraftNftRequest({
       prompt: prompt,
-      tokenUri: "",
+      nft1: NFT({
+        tokenId: 0,
+        tokenURI: "",
+        ownerDuringMint: address(0),
+        contractAddress: address(0),
+        chainId: 0
+      }),
+      nft2: NFT({
+        tokenId: 0,
+        tokenURI: "",
+        ownerDuringMint: address(0),
+        contractAddress: address(0),
+        chainId: 0
+      }),
       requestId: requestId,
       randomness: 0,
       tokenId: 0,
-      creator: msg.sender,
+      owner: msg.sender,
       status: Status.VRF_REQUESTED
     });
     return requestId;
@@ -155,7 +159,16 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
   function createBabyZexCraftNft(
     NFT memory nft1,
     NFT memory nft2
-  ) public onlyRelationshipOrCrosschain returns (uint256 requestId) {
+  ) external payable returns (uint256 requestId) {
+    // TODO : add onlyRelationshipOrCrosschain modifier
+    // TODO: add Mint Fee filtering
+    return _createBabyZexCraftNft(nft1, nft2);
+  }
+
+  function _createBabyZexCraftNft(
+    NFT memory nft1,
+    NFT memory nft2
+  ) internal returns (uint256 requestId) {
     requestId = requestRandomness(v_callbackGasLimit, requestConfirmations, numWords);
     s_requests[requestId] = RequestStatus({
       paid: VRF_V2_WRAPPER.calculateRequestPrice(v_callbackGasLimit),
@@ -165,13 +178,14 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
     requestIds.push(requestId);
     lastRequestId = requestId;
     emit RequestSent(requestId, numWords);
-    babyZexCraftNftRequests[requestId] = BabyZexCraftNftRequest({
+    zexCraftNftRequests[requestId] = ZexCraftNftRequest({
     nft1: nft1,
     nft2: nft2,
+    prompt: "",
     tokenId:0,
-     tokenUri:"",
+    requestId: requestId,
      randomness:0,
-    relationship:msg.sender,
+    owner:msg.sender,
       status: Status.VRF_REQUESTED
     });
     return requestId;
@@ -183,80 +197,90 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
     s_requests[_requestId].fulfilled = true;
     s_requests[_requestId].randomWord = randomWord;
 
-    if (newZexCraftNftRequests[_requestId].status == Status.VRF_REQUESTED) {
+    if (zexCraftNftRequests[_requestId].status == Status.VRF_REQUESTED) {
      
-      newZexCraftNftRequests[_requestId].randomness = randomWord % 100;
-      newZexCraftNftRequests[_requestId].status = Status.NFT_REQUESTED;
+      zexCraftNftRequests[_requestId].randomness = randomWord % 100;
+      zexCraftNftRequests[_requestId].status = Status.NFT_REQUESTED;
       emit RequestFulfilled(_requestId, _randomWords, s_requests[_requestId].paid);
     } else{
-      babyZexCraftNftRequests[_requestId].randomness = randomWord % 100;
-      babyZexCraftNftRequests[_requestId].status = Status.NFT_REQUESTED;
+      zexCraftNftRequests[_requestId].randomness = randomWord % 100;
+      zexCraftNftRequests[_requestId].status = Status.NFT_REQUESTED;
       emit RequestFulfilled(_requestId, _randomWords, s_requests[_requestId].paid);
     }
-  }
-
-  function mintBabyZexCraftNft(
-    uint256 _requestId,
-    string memory seed,
-    FunctionsRequest.Location secretsLocation,
-    bytes calldata encryptedSecretsReference,
-    string[] memory args,
-    bytes[] calldata bytesArgs,
-    uint64 subscriptionId
-  ) public onlyRelationshipOrCrosschain {
-    require(babyZexCraftNftRequests[_requestId].status == Status.NFT_REQUESTED, "request not found");
-    require(msg.sender == babyZexCraftNftRequests[_requestId].relationship, "not creator");
-    args[0] = "BREEDING";
-    args[1] = babyZexCraftNftRequests[_requestId].nft1.tokenURI;
-    args[2] = babyZexCraftNftRequests[_requestId].nft1.chainId.toString();
-    args[3] = babyZexCraftNftRequests[_requestId].nft2.tokenURI;
-    args[4] = babyZexCraftNftRequests[_requestId].nft2.chainId.toString();
-    args[5] = babyZexCraftNftRequests[_requestId].randomness.toString();
-    args[6] = seed;
-    FunctionsRequest.Request memory req;
-    req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode);
-    req.secretsLocation = secretsLocation;
-    req.encryptedSecretsReference = encryptedSecretsReference;
-    if (args.length > 0) {
-      req.setArgs(args);
-    }
-    if (bytesArgs.length > 0) {
-      req.setBytesArgs(bytesArgs);
-    }
-    s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, s_callbackGasLimit, donId);
-    functionToVRFRequest[s_lastRequestId] = _requestId;
-    babyZexCraftNftRequests[_requestId].status = Status.FUNCTIONS_REQUESTED;
   }
 
   function mintNewZexCraftNft(
     uint256 _requestId,
     string memory seed,
-    FunctionsRequest.Location secretsLocation,
-    bytes calldata encryptedSecretsReference,
+   bytes memory encryptedSecretsUrls,
+    uint8 donHostedSecretsSlotID,
+    uint64 donHostedSecretsVersion,
     string[] memory args,
-    bytes[] calldata bytesArgs,
     uint64 subscriptionId
   ) public {
-    require(newZexCraftNftRequests[_requestId].status == Status.NFT_REQUESTED, "request not found");
-    require(msg.sender == newZexCraftNftRequests[_requestId].creator, "not creator");
+    require(zexCraftNftRequests[_requestId].status == Status.NFT_REQUESTED, "request not found");
+    require(msg.sender == zexCraftNftRequests[_requestId].owner, "not owner");
+    zexCraftNftRequests[_requestId].tokenId=tokenIdCounter;
+
     args[0] = "NEW_BORN";
-    args[1] = newZexCraftNftRequests[_requestId].randomness.toString();
+    args[1] = zexCraftNftRequests[_requestId].randomness.toString();
     args[2] = block.chainid.toString();
     args[3] = seed;
+    args[4]=tokenIdCounter.toString();
+
     FunctionsRequest.Request memory req;
-    req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, sourceCode);
-    req.secretsLocation = secretsLocation;
-    req.encryptedSecretsReference = encryptedSecretsReference;
-    if (args.length > 0) {
-      req.setArgs(args);
+    req.initializeRequestForInlineJavaScript(sourceCode);
+    if (encryptedSecretsUrls.length > 0)
+      req.addSecretsReference(encryptedSecretsUrls);
+    else if (donHostedSecretsVersion > 0) {
+      req.addDONHostedSecrets(donHostedSecretsSlotID,donHostedSecretsVersion);
     }
-    if (bytesArgs.length > 0) {
-      req.setBytesArgs(bytesArgs);
-    }
+    req.setArgs(args);
+    
     s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, s_callbackGasLimit, donId);
     functionToVRFRequest[s_lastRequestId] = _requestId;
-    newZexCraftNftRequests[_requestId].status = Status.FUNCTIONS_REQUESTED;
+    zexCraftNftRequests[_requestId].status = Status.FUNCTIONS_REQUESTED;
+    tokenIdCounter+=1;
   }
+
+  function mintBabyZexCraftNft(
+    uint256 _requestId,
+    string memory seed,
+   bytes memory encryptedSecretsUrls,
+    uint8 donHostedSecretsSlotID,
+    uint64 donHostedSecretsVersion,
+    string[] memory args,
+    uint64 subscriptionId
+  ) public  {
+    // TODO : add onlyRelationshipOrCrosschain modifier
+    require(zexCraftNftRequests[_requestId].status == Status.NFT_REQUESTED, "request not found");
+    require(msg.sender == zexCraftNftRequests[_requestId].owner, "not owner");
+    zexCraftNftRequests[_requestId].tokenId= tokenIdCounter;
+
+    args[0] = "BREEDING";
+    args[1] = zexCraftNftRequests[_requestId].nft1.tokenURI;
+    args[2] = zexCraftNftRequests[_requestId].nft1.chainId.toString();
+    args[3] = zexCraftNftRequests[_requestId].nft2.tokenURI;
+    args[4] = zexCraftNftRequests[_requestId].nft2.chainId.toString();
+    args[5] = zexCraftNftRequests[_requestId].randomness.toString();
+    args[6] = seed;
+    args[7]=tokenIdCounter.toString();
+
+    FunctionsRequest.Request memory req;
+    req.initializeRequestForInlineJavaScript(sourceCode);
+    if (encryptedSecretsUrls.length > 0)
+      req.addSecretsReference(encryptedSecretsUrls);
+    else if (donHostedSecretsVersion > 0) {
+      req.addDONHostedSecrets(donHostedSecretsSlotID,donHostedSecretsVersion);
+    }
+    req.setArgs(args);
+    s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, s_callbackGasLimit, donId);
+    functionToVRFRequest[s_lastRequestId] = _requestId;
+    zexCraftNftRequests[_requestId].status = Status.FUNCTIONS_REQUESTED;
+    tokenIdCounter+=1;
+  }
+
+
 
   function getRequestStatus(
     uint256 _requestId
@@ -271,6 +295,8 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
     require(link.transfer(msg.sender, link.balanceOf(address(this))), "Unable to transfer");
   }
 
+  event ResponseData(string data);
+
   /**
    * @notice Store latest result/error
    * @param requestId The request ID, returned by sendRequest()
@@ -279,30 +305,16 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
    * Either response or error parameter will be set, but never both
    */
   function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory err) internal override {
-    if (!(err.length > 0)) {
-      uint256 _tokenIdCounter=tokenIdCounter;
+    if (response.length > 0) {
+      string memory tokenUri = string(response);
       uint256 _requestId = functionToVRFRequest[requestId];
-      if (newZexCraftNftRequests[_requestId].status == Status.FUNCTIONS_REQUESTED) {
-        string memory tokenUri = abi.decode(response, (string));
-        newZexCraftNftRequests[_requestId].tokenId= _tokenIdCounter;
-        newZexCraftNftRequests[_requestId].tokenUri = tokenUri;
-        newZexCraftNftRequests[_requestId].status = Status.MINTED;
-        _safeMint(msg.sender, _tokenIdCounter);
-        _setTokenURI(_tokenIdCounter, tokenUri);
-        tokenIdCounter+=1;
-      } else {
-        string memory tokenUri = abi.decode(response, (string));
-        babyZexCraftNftRequests[_requestId].tokenUri = tokenUri;
-        babyZexCraftNftRequests[_requestId].status = Status.MINTED;
-        babyZexCraftNftRequests[_requestId].tokenId=_tokenIdCounter;
-        _safeMint(msg.sender, _tokenIdCounter);
-        _setTokenURI(_tokenIdCounter, tokenUri);
-        tokenIdCounter+=1;
-      }
-    }
-    s_lastResponse = response;
-    s_lastError = err;
+      uint256 _tokenIdCounter = zexCraftNftRequests[_requestId].tokenId;
+      _safeMint(zexCraftNftRequests[_requestId].owner, _tokenIdCounter);
+      _setTokenURI(_tokenIdCounter, tokenUri);
+      zexCraftNftRequests[_requestId].status = Status.MINTED;
+    }else{
       emit OracleReturned(requestId, response, err);
+    }
   }
 
   /**
@@ -333,5 +345,9 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
 
   function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
     super._burn(tokenId);
+  }
+
+  function getStatus(uint requestId) public view returns (Status) {
+    return zexCraftNftRequests[requestId].status;
   }
 }

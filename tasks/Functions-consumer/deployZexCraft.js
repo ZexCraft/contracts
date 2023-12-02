@@ -1,5 +1,6 @@
 const { types } = require("hardhat/config")
 const { networks } = require("../../networks")
+const fs = require("fs")
 
 task("functions-deploy-zexcraft", "Deploys the ZexCraftNFT contract")
   .addOptionalParam("verify", "Set to true to verify contract", false, types.boolean)
@@ -8,11 +9,29 @@ task("functions-deploy-zexcraft", "Deploys the ZexCraftNFT contract")
 
     const linkToken = networks[network.name]["linkToken"]
     const linkWrapper = networks[network.name]["linkWrapper"]
+    const router = networks[network.name]["functionsRouter"]
+    const donId = "0x66756e2d657468657265756d2d7365706f6c69612d3100000000000000000000"
+    const relRegistry = "0x0429A2Da7884CA14E53142988D5845952fE4DF6a"
+    const sourceCode = fs.readFileSync("./create-zexcraft-nft.js").toString()
+    const callbackGasLimit = "200000"
+    const mintFee = "0"
+    const crossChainAddress = "0x0429A2Da7884CA14E53142988D5845952fE4DF6a"
+
     console.log("\n__Compiling Contracts__")
     await run("compile")
 
     const zexCraftContractFactory = await ethers.getContractFactory("ZexCraftNFT")
-    const zexCraftContract = await zexCraftContractFactory.deploy(linkToken, linkWrapper)
+    const zexCraftContract = await zexCraftContractFactory.deploy(
+      linkToken,
+      linkWrapper,
+      router,
+      donId,
+      relRegistry,
+      sourceCode,
+      callbackGasLimit,
+      mintFee,
+      crossChainAddress
+    )
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
@@ -39,7 +58,17 @@ task("functions-deploy-zexcraft", "Deploys the ZexCraftNFT contract")
         console.log("\nVerifying contract...")
         await run("verify:verify", {
           address: zexCraftContract.address,
-          constructorArguments: [linkToken, linkWrapper],
+          constructorArguments: [
+            linkToken,
+            linkWrapper,
+            router,
+            donId,
+            relRegistry,
+            sourceCode,
+            callbackGasLimit,
+            mintFee,
+            crossChainAddress,
+          ],
         })
         console.log("Contract verified")
       } catch (error) {

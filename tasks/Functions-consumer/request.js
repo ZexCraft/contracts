@@ -15,9 +15,11 @@ const chalk = require("chalk")
 const path = require("path")
 const process = require("process")
 
-task("functions-request", "Initiates an on-demand request from a Functions consumer contract")
-  .addParam("contract", "Address of the consumer contract to call")
+task("functions-request", "Initiates an on-demand request from a Functions zexcraft contract")
+  .addParam("contract", "Address of the zexcraft contract to call")
   .addParam("subid", "Billing subscription ID used to pay for the request")
+  .addParam("seed", "Seed of the Midjourney Generation")
+  .addParam("reqid", "RequestId of the initial request using VRF")
   .addOptionalParam(
     "simulate",
     "Flag indicating if source JS should be run locally before making an on-chain request",
@@ -26,7 +28,7 @@ task("functions-request", "Initiates an on-demand request from a Functions consu
   )
   .addOptionalParam(
     "callbackgaslimit",
-    "Maximum amount of gas that can be used to call fulfillRequest in the consumer contract",
+    "Maximum amount of gas that can be used to call fulfillRequest in the zexcraft contract",
     100_000,
     types.int
   )
@@ -49,10 +51,12 @@ task("functions-request", "Initiates an on-demand request from a Functions consu
     const subscriptionId = parseInt(taskArgs.subid)
     const slotId = parseInt(taskArgs.slotid)
     const callbackGasLimit = parseInt(taskArgs.callbackgaslimit)
+    const seed = taskArgs.seed
+    const vrfRequestId = taskArgs.reqid
 
-    // Attach to the FunctionsConsumer contract
-    const consumerFactory = await ethers.getContractFactory("FunctionsConsumer")
-    const consumerContract = consumerFactory.attach(contractAddr)
+    // Attach to the ZexCraftNFT contract
+    const zexcraftFactory = await ethers.getContractFactory("ZexCraftNFT")
+    const zexcraftContract = zexcraftFactory.attach(contractAddr)
 
     // Get requestConfig from the specified config file
     const requestConfig = require(path.isAbsolute(taskArgs.configpath)
@@ -88,11 +92,10 @@ task("functions-request", "Initiates an on-demand request from a Functions consu
     const donId = networks[network.name]["donId"]
     const secretsManager = new SecretsManager({ signer, functionsRouterAddress, donId })
     await secretsManager.initialize()
-
-    // Validate the consumer contract has been authorized to use the subscription
+    // Validate the zexcraft contract has been authorized to use the subscription
     const subInfo = await subManager.getSubscriptionInfo(subscriptionId)
     if (!subInfo.consumers.map((c) => c.toLowerCase()).includes(contractAddr.toLowerCase())) {
-      throw Error(`Consumer contract ${contractAddr} has not been added to subscription ${subscriptionId}`)
+      throw Error(`zexcraft contract ${contractAddr} has not been added to subscription ${subscriptionId}`)
     }
 
     // Estimate the cost of the request fulfillment
@@ -123,6 +126,7 @@ task("functions-request", "Initiates an on-demand request from a Functions consu
 
     // Handle encrypted secrets
     let encryptedSecretsReference = []
+    let globalVersion
     let gistUrl
     if (
       network.name !== "localFunctionsTestnet" &&
@@ -148,8 +152,9 @@ task("functions-request", "Initiates an on-demand request from a Functions consu
             encryptedSecretsHexstring: encryptedSecrets.encryptedSecrets,
             gatewayUrls: networks[network.name]["gatewayUrls"],
             slotId,
-            minutesUntilExpiration: 5,
+            minutesUntilExpiration: 60,
           })
+          globalVersion = version
           encryptedSecretsReference = await secretsManager.buildDONHostedEncryptedSecretsReference({
             slotId,
             version,
@@ -172,12 +177,10 @@ task("functions-request", "Initiates an on-demand request from a Functions consu
     // Initiate the request
     const spinner = utils.spin()
     spinner.start(
-      `Waiting for transaction for FunctionsConsumer contract ${contractAddr} on network ${network.name} to be confirmed...`
+      `Waiting for transaction for ZexCraftNFT contract ${contractAddr} on network ${network.name} to be confirmed...`
     )
     // Use a manual gas limit for the request transaction since estimated gas limit is not always accurate
-    const overrides = {
-      gasLimit: taskArgs.requestgaslimit,
-    }
+
     // If specified, use the gas price from the network config instead of Ethers estimated price
     if (networks[network.name].gasPrice) {
       overrides.gasPrice = networks[network.name].gasPrice
@@ -186,15 +189,14 @@ task("functions-request", "Initiates an on-demand request from a Functions consu
     if (networks[network.name].nonce) {
       overrides.nonce = networks[network.name].nonce
     }
-    const requestTx = await consumerContract.sendRequest(
-      requestConfig.source,
-      requestConfig.secretsLocation,
-      encryptedSecretsReference,
-      requestConfig.args ?? [],
-      requestConfig.bytesArgs ?? [],
-      subscriptionId,
-      callbackGasLimit,
-      overrides
+    const requestTx = await zexcraftContract.mintNewZexCraftNft(
+      vrfRequestId,
+      seed,
+      "0x",
+      slotId,
+      globalVersion,
+      ["", "", "", "", ""],
+      subscriptionId
     )
     const requestTxReceipt = await requestTx.wait(1)
     if (network.name !== "localFunctionsTestnet") {
@@ -220,7 +222,7 @@ task("functions-request", "Initiates an on-demand request from a Functions consu
         case FulfillmentCode.FULFILLED:
           if (responseBytesHexstring !== "0x") {
             spinner.succeed(
-              `Request ${requestId} fulfilled!\nResponse has been sent to consumer contract: ${decodeResult(
+              `Request ${requestId} fulfilled!\nResponse has been sent to zexcraft contract: ${decodeResult(
                 responseBytesHexstring,
                 requestConfig.expectedReturnType
               ).toString()}\n`
@@ -236,7 +238,7 @@ task("functions-request", "Initiates an on-demand request from a Functions consu
 
         case FulfillmentCode.USER_CALLBACK_ERROR:
           spinner.fail(
-            "Error encountered when calling consumer contract callback.\nEnsure the fulfillRequest function in FunctionsConsumer is correct and the --callbackgaslimit is sufficient."
+            "Error encountered when calling zexcraft contract callback.\nEnsure the fulfillRequest function in ZexCraftNFT is correct and the --callbackgaslimit is sufficient."
           )
           break
 

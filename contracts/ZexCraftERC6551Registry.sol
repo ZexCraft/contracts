@@ -27,10 +27,25 @@ contract ZexCraftERC6551Registry is IERC6551Registry {
     uint256 salt,
     bytes memory initData
   ) external payable returns (address) {
-    require(implementation == i_implementation, "Invalid implementation");
-    require(msg.sender == IERC721(tokenContract).ownerOf(tokenId), "Invalid owner");
     return _createAccount(implementation, chainId, tokenContract, tokenId);
    
+  }
+
+
+  function createAccountAndCall(
+    address implementation,
+    uint256 chainId,
+    address tokenContract,
+    uint256 tokenId,
+    uint256 salt,
+    bytes memory initData,
+    address crossChainContract
+  ) external payable returns (address) {
+  address accountAddress=_createAccount(implementation, chainId, tokenContract, tokenId);
+  (bool success,)=crossChainContract.call{value: msg.value}(abi.encodeWithSignature("createCrosschainImport(address,uint256,address,address,uint8)", tokenContract,tokenId,msg.sender,accountAddress,0));
+  require(success,"Failed to create crosschain import");
+
+  return accountAddress;
   }
 
 
@@ -41,6 +56,8 @@ contract ZexCraftERC6551Registry is IERC6551Registry {
     address tokenContract,
     uint256 tokenId
   ) internal returns (address) {
+     require(implementation == i_implementation, "Invalid implementation");
+    require(msg.sender == IERC721(tokenContract).ownerOf(tokenId), "Invalid owner");
     bytes memory code = _creationCode(implementation, chainId, tokenContract, tokenId, 1);
     address account_ = Create2.computeAddress(bytes32(uint256(1)), keccak256(code));
 

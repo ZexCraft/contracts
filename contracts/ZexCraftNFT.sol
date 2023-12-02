@@ -5,11 +5,19 @@ import {FunctionsClient} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_
 import {ConfirmedOwner} from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
 import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/libraries/FunctionsRequest.sol";
 import "@chainlink/contracts/src/v0.8/vrf/VRFV2WrapperConsumerBase.sol";
+import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
+import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
+
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+
+
 import "./interfaces/IRelationshipRegistry.sol";
 import "./interfaces/IERC6551Registry.sol";
-contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, FunctionsClient, ConfirmedOwner {
+
+
+
+contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, FunctionsClient, ConfirmedOwner, CCIPReceiver {
   using Strings for uint256;
   using FunctionsRequest for FunctionsRequest.Request;
 
@@ -82,6 +90,10 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
 
   // Chainlink CCIP Variables
   address public crossChainAddress;
+  bytes32 public s_lastReceivedMessageId ;
+  bytes public  s_lastReceivedData ;
+  mapping(uint64 => mapping(address => bool)) public allowlistedAddresses;
+
 
   constructor(
     address _linkAddress,
@@ -94,12 +106,14 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
     uint256 _mintFee,
     address _crossChainAddress,
     address _implementation,
-    IERC6551Registry _registry
+    IERC6551Registry _registry,
+    address _ccipRouter
   )
     ERC721("ZexCraft", "ZCT")
     FunctionsClient(router)
     VRFV2WrapperConsumerBase(_linkAddress, _wrapperAddress)
     ConfirmedOwner(msg.sender)
+    CCIPReceiver(_ccipRouter)
   {
     donId = _donId;
     relRegisty = _relRegisty;
@@ -119,10 +133,24 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
   event RequestFulfilled(uint256 requestId, uint256[] randomWords, uint256 payment);
   event ZexCraftNFTCreated(uint256 tokenId, string tokenUri, address owner);
   event ZexCraftAccountDeployed(address tokenAddress, uint256 tokenId, address account);
+  event CrosschainNFTImported(address tokenAddress, uint256 tokenId, address creator, address account,uint256 chainId);
+  event NFTImported(address tokenAddress, uint256 tokenId, address creator, address account);
+  event OperationFailed();
 
+    
   modifier onlyRelationshipOrCrosschain() {
     require(relRegisty.isRelationship(msg.sender)||msg.sender==crossChainAddress, "only relationship");
     _;
+  }
+
+  modifier onlyAllowlisted(uint64 sourceChainSelector,address sender)
+  {
+    require(allowlistedAddresses[sourceChainSelector][sender]==true,"not allowlisted");
+    _;
+  }
+
+  function addZexCraftCrossChain(uint64 sourceChainSelector,address sender) external onlyOwner {
+    allowlistedAddresses[sourceChainSelector][sender]=true;
   }
 
   function createNewZexCraftNft(string memory prompt) external payable returns (uint256 requestId) {
@@ -333,7 +361,8 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
     _deployAccount(address(this),_tokenId);
   }
 
-  function deployOtherNFTAccount(address tokenAddress, uint256 _tokenId) external {
+  function deployOtherNFTAccount(address tokenAddress, uint256 _tokenId) external payable {
+    require(msg.value>=mintFee,"not enough fee");
     _deployAccount(tokenAddress,_tokenId);
   }
 
@@ -370,9 +399,30 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
     return super.tokenURI(tokenId);
   }
 
-  function supportsInterface(bytes4 interfaceId) public view override(ERC721) returns (bool) {
+  function supportsInterface(bytes4 interfaceId) public view override(ERC721,CCIPReceiver) returns (bool) {
     return super.supportsInterface(interfaceId);
   }
+
+
+
+    function _ccipReceive(
+        Client.Any2EVMMessage memory any2EvmMessage
+    )
+        internal
+        override
+        onlyAllowlisted(
+            any2EvmMessage.sourceChainSelector,
+            abi.decode(any2EvmMessage.sender, (address))
+        ) 
+    {
+      if(any2EvmMessage.destTokenAmounts.length != 0&& any2EvmMessage.destTokenAmounts[0].amount>=mintFee){
+        _createNewZexCraftNft(abi.decode(any2EvmMessage.data, (string)));
+      }
+      else{
+        emit OperationFailed();
+      }
+    }
+ 
 
   function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
     super._burn(tokenId);

@@ -1,38 +1,31 @@
 const fs = require("fs")
 const { Location, ReturnType, CodeLanguage } = require("@chainlink/functions-toolkit")
 
-const newborn = [
-  "NEW_BORN",
-  "1",
-  "It should like an NFT. Star Wars",
-  "https://noun-api.com/beta/pfp?head=119&glasses=18&background=0&body=5&accessory=2",
-  "20",
-  "2033421602",
-]
+const newborn = ["NEW_BORN", "20", "1231", "IGvB83r51EVPRnnYS19X"]
 
 const breed = [
   "BREED",
-  "3",
   "https://bafybeid7whref5corljy6rntodoqjvj6qi2d42vcebbqccwobh6wrq63oy.ipfs.nftstorage.link/metadata.json",
-  "ethereum",
-  "0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d",
-  "8334",
+  "1",
+  "https://bafybeifhofputngb7k3zqpl5otnv4utpvse66sbzutxsg6bkozks6ytt7m.ipfs.dweb.link/354",
+  "3",
   "87",
-  "660529954",
+  "IGvB83r51EVPRnnYS19X",
 ]
+
+const midjourney = ["NEW_BORN", "A gorilla in a classroom", "90", "IGvB83r51EVPRnnYS19X"]
 
 // Configure the request by setting the fields below
 const requestConfig = {
   // String containing the source code to be executed
-  source: fs.readFileSync("./create-zexnouns.js").toString(),
+  source: fs.readFileSync("./create-zexcraft-nft.js").toString(),
   //source: fs.readFileSync("./API-request-example.js").toString(),
   // Location of source code (only Inline is currently supported)
   codeLocation: Location.Inline,
   // Optional. Secrets can be accessed within the source code with `secrets.varName` (ie: secrets.apiKey). The secrets object can only contain string values.
   secrets: {
-    stableCogApiKey: process.env.STABLECOG_API_KEY ?? "",
     nftStorageApiKey: process.env.NFT_STORAGE_API_KEY ?? "",
-    simpleHashApiKey: process.env.SIMPLE_HASH_API_KEY ?? "",
+    midjourneyApiKey: process.env.MIDJOURNEY_API_KEY ?? "",
   },
   // Optional if secrets are expected in the sourceLocation of secrets (only Remote or DONHosted is supported)
   secretsLocation: Location.DONHosted,

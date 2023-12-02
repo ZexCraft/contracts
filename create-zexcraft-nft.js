@@ -1,67 +1,64 @@
-if (secrets.stableCogApiKey == "" || secrets.stableCogApiKey == undefined) {
-  throw Error("STABLECOG_API_KEY NOT SET")
+if (secrets.midjourneyApiKey == "" || secrets.midjourneyApiKey == undefined) {
+  throw Error("MIDJOURNEY_API_KEY NOT SET")
 }
 
 if (secrets.nftStorageApiKey == "" || secrets.nftStorageApiKey == undefined) {
   throw Error("NFT_STORAGE_API_KEY NOT SET")
 }
 
+const BASE_URL = "https://api.thenextleg.io/v2"
+const AUTH_TOKEN = secrets.midjourneyApiKey
+const AUTH_HEADERS = {
+  Authorization: `Bearer ${AUTH_TOKEN}`,
+  "Content-Type": "application/json",
+}
+
 const type = args[0]
-const nounId = args[1]
 if (type == "NEW_BORN") {
-  const prompt = args[2]
-  const image = args[3]
-  const rarityNumber = args[4]
-  const seed = args[5]
+  const rarityNumber = args[1]
+  const originChain = args[2]
+  const seed = args[3]
 
   const rarity = getRarity(rarityNumber)
 
-  const modifiedPrompt = `PRIMARY COLOR: ${rarity.color}. ${prompt}`
-
   const outputsResponse = await Functions.makeHttpRequest({
-    url: `https://api.stablecog.com/v1/image/generation/outputs`,
+    url: `${BASE_URL}/message/${seed}`,
     method: "GET",
-    headers: { Authorization: `Bearer ${secrets.stableCogApiKey}`, "Content-Type": "application/json" },
+    headers: AUTH_HEADERS,
   })
 
-  // console.log(outputsResponse)
+  console.log(outputsResponse)
+
+  if (outputsResponse.data == undefined && outputsResponse.error == undefined) {
+    throw Error("Invalid seed")
+  }
 
   if (outputsResponse.error) {
     throw Error("API Failed")
   }
-  const imageUrl = outputsResponse.data.outputs.filter(
-    (output) => output.generation.seed == seed && output.generation.prompt.text == modifiedPrompt
-  )[0].generation.outputs[0].image_url
+
+  const imageUrl = outputsResponse.data.response.imageUrls[0]
+
+  const prompt = outputsResponse.data.response.content
 
   console.log(imageUrl)
 
-  const props = getQueryParams(image)
+  // const modifiedImageUrl = await storeImageInIPFS(imageUrl)
 
-  console.log(props)
+  // console.log(modifiedImageUrl)
+
   const metadata = {
-    name: "ZexNOUNS #" + nounId,
-    description: "A zex-crafted NOUN NFTs that are bred with other NFTs powered by AI",
+    name: "ZexNFTs",
+    description: "A freshly created and zex crafted NFT that is generated with a prompt using Midjourney AI",
     image: imageUrl,
     attributes: [
       {
-        trait_type: "head",
-        value: props.head,
+        trait_type: "type",
+        value: type,
       },
       {
-        trait_type: "background",
-        value: props.background,
-      },
-      {
-        trait_type: "body",
-        value: props.body,
-      },
-      {
-        trait_type: "accessory",
-        value: props.accessory,
-      },
-      {
-        trait_type: "glasses",
-        value: props.glasses,
+        trait_type: "originChain",
+        value: getChain(originChain),
       },
       {
         trait_type: "prompt",
@@ -83,73 +80,96 @@ if (type == "NEW_BORN") {
 
   return await storeInIPFS(metadataString)
 } else {
-  if (secrets.simpleHashApiKey == "" || secrets.simpleHashApiKey == undefined) {
-    throw Error("SIMPLE_HASH_API_KEY NOT SET")
-  }
-  const tokenUri = args[2]
-  const chain = args[3]
-  const tokenAddress = args[4]
-  const tokenId = args[5]
-  const rarityNumber = args[6]
-  const seed = args[7]
+  const nft1TokenURI = args[1]
+  const nft1Chain = args[2]
+  const nft2TokenURI = args[3]
+  const nft2Chain = args[4]
+  const rarityNumber = args[5]
+  const seed = args[6]
 
-  const foreignNftResponse = await getNFT(chain, tokenAddress, tokenId)
-
-  if (foreignNftResponse.error) {
-    throw Error("SimpleHash API Failed")
-  }
-  // console.log(foreignNftResponse.data)
-  let customPrompt = `Combine the init image with the following traits of this ${foreignNftResponse.data.contract.name} NFT to form.`
-
-  foreignNftResponse.data.extra_metadata.attributes.forEach((element) => {
-    customPrompt += ` ${element.trait_type}: ${element.value},`
-  })
-
-  const rarity = getRarity(rarityNumber)
-
-  const modifiedPrompt = `PRIMARY COLOR: ${rarity.color}. ${customPrompt}`.slice(0, -1)
-
-  console.log(modifiedPrompt)
-  const outputsResponse = await Functions.makeHttpRequest({
-    url: `https://api.stablecog.com/v1/image/generation/outputs`,
-    method: "GET",
-    headers: { Authorization: `Bearer ${secrets.stableCogApiKey}`, "Content-Type": "application/json" },
-  })
-
-  if (outputsResponse.error) {
-    throw Error("StableCog outputs fetch Failed")
-  }
-
-  const imageUrl = outputsResponse.data.outputs.filter(
-    (output) => output.generation.seed == seed && output.generation.prompt.text == modifiedPrompt
-  )[0].generation.outputs[0].image_url
-
-  console.log(imageUrl)
-
-  const nounMetadataResponse = await Functions.makeHttpRequest({
-    url: tokenUri,
+  const nft1MetadataRequest = Functions.makeHttpRequest({
+    url: nft1TokenURI,
     method: "GET",
     headers: { "Content-Type": "application/json" },
   })
 
-  if (nounMetadataResponse.error) {
-    throw Error("Noun Metadata Fetch Failed")
+  const nft2MetadataRequest = Functions.makeHttpRequest({
+    url: nft2TokenURI,
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  })
+
+  const [nft1MetadataResponse, nft2MetadataResponse] = await Promise.all([nft1MetadataRequest, nft2MetadataRequest])
+
+  if (nft1MetadataResponse.error) {
+    throw Error("NFT1 Metadata Fetch Failed")
   }
 
-  const nounMetadata = nounMetadataResponse.data
-  console.log(nounMetadata)
+  if (nft2MetadataResponse.error) {
+    throw Error("NFT2 Metadata Fetch Failed")
+  }
+
+  const nft1Metadata = nft1MetadataResponse.data
+  const nft2Metadata = nft2MetadataResponse.data
+
+  const rarity = getRarity(rarityNumber)
+
+  // console.log(modifiedPrompt)
+  const outputsResponse = await Functions.makeHttpRequest({
+    url: `${BASE_URL}/message/${seed}`,
+    method: "GET",
+    headers: AUTH_HEADERS,
+  })
+
+  if (outputsResponse.data == undefined && outputsResponse.error == undefined) {
+    throw Error("Invalid seed")
+  }
+  if (outputsResponse.error) {
+    throw Error("MidJourney outputs fetch Failed")
+  }
+  const imageUrl = outputsResponse.data.response.imageUrls[0]
+
+  const modifiedPrompt = outputsResponse.data.response.content
+
+  console.log(imageUrl)
+
+  // const modifiedImageUrl = await storeImageInIPFS(imageUrl)
+
+  // console.log(modifiedImageUrl)
+
   const metadata = {
-    name: "ZexNOUNS #" + nounId,
-    description: "A zex-crafted NOUN NFTs that are bred with other NFTs powered by AI",
+    name: "ZexNFT",
+    description: "A zexcrafted NFT that is generated by combining the two parents NFTs using Midjourney AI",
     image: imageUrl,
     attributes: [
-      ...nounMetadata.attributes,
-      ...foreignNftResponse.data.extra_metadata.attributes.map((attribute) => {
-        return {
-          trait_type: "foreign " + attribute.trait_type,
-          value: "foreign " + attribute.value,
-        }
-      }),
+      {
+        trait_type: "type",
+        value: type,
+      },
+      {
+        trait_type: "nft1_name",
+        value: nft1Metadata.name,
+      },
+      {
+        trait_type: "nft2_name",
+        value: nft2Metadata.name,
+      },
+      {
+        trait_type: "nft1_image",
+        value: nft1Metadata.image,
+      },
+      {
+        trait_type: "nft2_image",
+        value: nft2Metadata.image,
+      },
+      {
+        trait_type: "nft1_chain",
+        value: getChain(nft1Chain),
+      },
+      {
+        trait_type: "nft2_chain",
+        value: getChain(nft2Chain),
+      },
       {
         trait_type: "kind",
         value: rarity.name,
@@ -158,38 +178,55 @@ if (type == "NEW_BORN") {
         trait_type: "rarity",
         value: rarityNumber,
       },
+      {
+        trait_type: "prompt",
+        value: modifiedPrompt,
+      },
     ],
   }
   const metadataString = JSON.stringify(metadata, null, 2)
   console.log(metadataString)
-
   return await storeInIPFS(metadataString)
 }
 
-function getQueryParams(url) {
-  const params = {}
-  const queryString = url.split("?")[1]
+async function storeInIPFS(metadataString) {
+  const storeMetadataRequest = Functions.makeHttpRequest({
+    url: `https://zixins-be1.adaptable.app/auth/store`,
+    method: "POST",
+    headers: { Authorization: `Bearer ${secrets.nftStorageApiKey}`, "Content-Type": "application/json" },
+    data: { metadataString: metadataString },
+  })
+  const [storeMetadataResponse] = await Promise.all([storeMetadataRequest])
+  console.log(storeMetadataResponse)
 
-  if (queryString) {
-    const keyValuePairs = queryString.split("&")
-
-    keyValuePairs.forEach((pair) => {
-      const [key, value] = pair.split("=")
-      params[key] = value
-    })
+  if (!storeMetadataResponse.error) {
+    const metadataUrl = "https://" + storeMetadataResponse.data.value.cid + ".ipfs.nftstorage.link/metadata.json"
+    console.log("Returning url: " + metadataUrl)
+    return Functions.encodeString(metadataUrl)
+  } else {
+    throw Error(storeMetadataResponse.data)
   }
-
-  return params
 }
 
-async function getNFT(chain, tokenAddress, tokenId) {
-  const url = `https://api.simplehash.com/api/v0/nfts/${chain}/${tokenAddress}/${tokenId}`
-  const response = await Functions.makeHttpRequest({
-    url: url,
-    method: "GET",
-    headers: { "X-API-KEY": secrets.simpleHashApiKey, accept: "application/json" },
+async function storeImageInIPFS(imageUrl) {
+  console.log("Requesting image: ", { image: imageUrl })
+  const storeImageRequest = Functions.makeHttpRequest({
+    url: `https://zixins-be1.adaptable.app/auth/image`,
+    method: "POST",
+    headers: { Authorization: `Bearer ${secrets.nftStorageApiKey}`, "Content-Type": "application/json" },
+    data: { image: imageUrl },
   })
-  return response
+  const [storeImageResponse] = await Promise.all([storeImageRequest])
+  console.log("Image Response: ")
+  console.log(storeImageResponse)
+
+  if (!storeImageResponse.error) {
+    const imageUrl = "https://" + storeImageResponse.data.value.cid + ".ipfs.nftstorage.link/image.jpg"
+    console.log("Returning url: " + imageUrl)
+    return imageUrl
+  } else {
+    throw Error(storeImageResponse.data)
+  }
 }
 
 function getRarity(rarity) {
@@ -210,21 +247,20 @@ function getRarity(rarity) {
   }
 }
 
-async function storeInIPFS(metadataString) {
-  const storeMetadataRequest = Functions.makeHttpRequest({
-    url: `https://zixins-be1.adaptable.app/auth/store`,
-    method: "POST",
-    headers: { Authorization: `Bearer ${secrets.nftStorageApiKey}`, "Content-Type": "application/json" },
-    data: { metadataString: metadataString },
-  })
-  const [storeMetadataResponse] = await Promise.all([storeMetadataRequest])
-  console.log(storeMetadataResponse)
-
-  if (!storeMetadataResponse.error) {
-    const metadataUrl = "https://" + storeMetadataResponse.data.value.cid + ".ipfs.nftstorage.link/metadata.json"
-    console.log("Returning url: " + metadataUrl)
-    return Functions.encodeString(metadataUrl)
+function getChain(chainSelector) {
+  if (chainSelector == "16015286601757825753") {
+    return "sepolia"
+  } else if (chainSelector == "2664363617261496610") {
+    return "optimismGoerli"
+  } else if (chainSelector == "12532609583862916517") {
+    return "polygonMumbai"
+  } else if (chainSelector == "14767482510784806043") {
+    return "avalancheFuji"
+  } else if (chainSelector == "13264668187771770619") {
+    return "avalancheMainnet"
+  } else if (chainSelector == "5790810961207155433") {
+    return "baseGoerli"
   } else {
-    throw Error(storeMetadataResponse.data)
+    return "unknown"
   }
 }

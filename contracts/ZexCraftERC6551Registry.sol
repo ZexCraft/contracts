@@ -9,7 +9,6 @@ contract ZexCraftERC6551Registry is IERC6551Registry {
 
   error InitializationFailed();
   address immutable i_implementation;
-  address public relationshipRegistry;
   
   mapping(address => bool) public accountExists;
 
@@ -18,9 +17,7 @@ contract ZexCraftERC6551Registry is IERC6551Registry {
   }
 
 
-  function setRelationshipRegistry(address _relationshipRegistry) external {
-    relationshipRegistry = _relationshipRegistry;
-  }
+
 
   function createAccount(
     address implementation,
@@ -31,9 +28,8 @@ contract ZexCraftERC6551Registry is IERC6551Registry {
     bytes memory initData
   ) external payable returns (address) {
     require(implementation == i_implementation, "Invalid implementation");
-
-      require(msg.sender == IERC721(tokenContract).ownerOf(tokenId), "Invalid owner");
-      _createAccount(implementation, chainId, tokenContract, tokenId);
+    require(msg.sender == IERC721(tokenContract).ownerOf(tokenId), "Invalid owner");
+    return _createAccount(implementation, chainId, tokenContract, tokenId);
    
   }
 
@@ -65,19 +61,18 @@ contract ZexCraftERC6551Registry is IERC6551Registry {
     uint256 tokenId,
     uint256 salt
   ) external view returns (address) {
-    return _account(implementation, chainId, tokenContract, tokenId, salt);
+    return _account(implementation, chainId, tokenContract, tokenId );
   }
 
   function _account(
     address implementation,
     uint256 chainId,
     address tokenContract,
-    uint256 tokenId,
-    uint256 salt
+    uint256 tokenId
   ) internal view returns (address) {
-    bytes32 bytecodeHash = keccak256(_creationCode(implementation, chainId, tokenContract, tokenId, salt));
+    bytes32 bytecodeHash = keccak256(_creationCode(implementation, chainId, tokenContract, tokenId, uint256(1)));
 
-    return Create2.computeAddress(bytes32(salt), bytecodeHash);
+    return Create2.computeAddress(bytes32(uint256(1)), bytecodeHash);
   }
 
   function _creationCode(

@@ -94,6 +94,8 @@ const networks = {
     functionsRouter: "0xb83E47C2bC239B3bf370bc41e1459A34b41238D0",
     ccipRouter: "0xD0daae2231E9CB96b94C8512223533293C3693Bf",
     donId: "fun-ethereum-sepolia-1",
+    implementation: "0xb1515f97f08046Cf041d978068f66986Ab750FBC",
+    accountRegistry: "0xa9bd9d1cd1f29a72a6fa85dcdaec1c1efab5cde9",
     gatewayUrls: [
       "https://01.functions-gateway.testnet.chain.link/",
       "https://02.functions-gateway.testnet.chain.link/",

@@ -17,7 +17,7 @@ contract ZexCraftRelationship{
     {
        nfts[0]=nft1;
        nfts[1]=nft2;
-        emit RelationshipCreated(nft1,nft2);
+       emit RelationshipCreated(nft1,nft2);
     }
 
 
@@ -43,5 +43,9 @@ contract ZexCraftRelationship{
   }
 
 
+  function getCreateBabyData()public view returns(bytes memory)
+  {
+    return abi.encodeWithSignature("createBabyZexCraftNft((uint256,string,address,address,uint256),(uint256,string,address,address,uint256))",nfts[0],nfts[1]);
+  }
 
 }

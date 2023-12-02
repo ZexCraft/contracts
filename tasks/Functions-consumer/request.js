@@ -29,7 +29,7 @@ task("functions-request", "Initiates an on-demand request from a Functions zexcr
   .addOptionalParam(
     "callbackgaslimit",
     "Maximum amount of gas that can be used to call fulfillRequest in the zexcraft contract",
-    100_000,
+    300_000,
     types.int
   )
   .addOptionalParam(

@@ -19,18 +19,35 @@ interface IERC6551Executable {
 
 contract ZexCraftERC6551Account is IERC165, IERC1271, IERC6551Account, IERC6551Executable {
   uint256 public state;
+ 
 
   receive() external payable {}
+
+  function getCreateRelationshipData(address otherAccount,bytes[2] memory signatures)public pure returns(bytes memory)
+  {
+    return abi.encodeWithSignature("createRelationship(address,bytes[2])",otherAccount,signatures);
+  }
+
+  function createRelationship(address relationshipRegistry,address otherAccount,bytes[2] memory signatures) external returns (address) {
+    return abi.decode(_execute(relationshipRegistry, 0, getCreateRelationshipData(otherAccount,signatures), 0), (address));
+  }
 
   function execute(
     address to,
     uint256 value,
-    bytes calldata data,
+    bytes memory data,
     uint8 operation
   ) external payable virtual returns (bytes memory result) {
-    require(_isValidSigner(msg.sender), "Invalid signer");
-    require(operation == 0, "Only call operations are supported");
+    return _execute(to, value, data, operation);
+  }
 
+
+  function _execute(
+    address to,
+    uint256 value,
+    bytes memory data,
+    uint8 operation
+  ) internal virtual returns (bytes memory result) {
     ++state;
 
     bool success;

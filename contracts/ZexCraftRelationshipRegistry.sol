@@ -28,7 +28,7 @@ contract ZexCraftRelationshipRegistry {
     }
 
 
-    function createRelationship(address otherAccount,  bytes[2] memory signatures) external onlyZexCraftERC6551Account(otherAccount)   {
+    function createRelationship(address otherAccount,  bytes[2] memory signatures) external onlyZexCraftERC6551Account(otherAccount) returns(address)   {
         // TODO: Verify signatures with owner of NFTs using owner() function of ERC6551
         IRelationship.NFT memory nft1=_getNft(msg.sender);
         IRelationship.NFT memory nft2=_getNft(otherAccount);
@@ -38,8 +38,10 @@ contract ZexCraftRelationshipRegistry {
         
         IRelationship(relationship).initialize(nft1, nft2);
         relationshipExists[relationship] = true;
-
+        
         emit RelationshipCreated(msg.sender, otherAccount, relationship);
+
+        return relationship;
     }
 
     function _deployProxy(

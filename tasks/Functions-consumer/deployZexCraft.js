@@ -10,10 +10,12 @@ task("functions-deploy-zexcraft", "Deploys the ZexCraftNFT contract")
     const linkToken = networks[network.name]["linkToken"]
     const linkWrapper = networks[network.name]["linkWrapper"]
     const router = networks[network.name]["functionsRouter"]
+    const implementation = networks[network.name]["implementation"]
+    const accountRegistry = networks[network.name]["accountRegistry"]
     const donId = "0x66756e2d657468657265756d2d7365706f6c69612d3100000000000000000000"
     const relRegistry = "0x0429A2Da7884CA14E53142988D5845952fE4DF6a"
     const sourceCode = fs.readFileSync("./create-zexcraft-nft.js").toString()
-    const callbackGasLimit = "200000"
+    const callbackGasLimit = "300000"
     const mintFee = "0"
     const crossChainAddress = "0x0429A2Da7884CA14E53142988D5845952fE4DF6a"
 
@@ -30,7 +32,9 @@ task("functions-deploy-zexcraft", "Deploys the ZexCraftNFT contract")
       sourceCode,
       callbackGasLimit,
       mintFee,
-      crossChainAddress
+      crossChainAddress,
+      implementation,
+      accountRegistry
     )
 
     console.log(
@@ -68,6 +72,8 @@ task("functions-deploy-zexcraft", "Deploys the ZexCraftNFT contract")
             callbackGasLimit,
             mintFee,
             crossChainAddress,
+            implementation,
+            accountRegistry,
           ],
         })
         console.log("Contract verified")

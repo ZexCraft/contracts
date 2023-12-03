@@ -5,8 +5,7 @@ import {FunctionsClient} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_
 import {ConfirmedOwner} from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
 import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/libraries/FunctionsRequest.sol";
 import "@chainlink/contracts/src/v0.8/vrf/VRFV2WrapperConsumerBase.sol";
-// import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
-// import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
+
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
@@ -38,10 +37,10 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
     uint256 tokenId;
     address owner;
     address account;
-    bytes  encryptedSecretsUrls;
     uint8 donHostedSecretsSlotID;
     uint64 donHostedSecretsVersion;
     string[] args;
+    string messageId;
     Status status;
   }
 
@@ -80,11 +79,8 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
   uint32 public constant numWords = 1;
 
 
-  // // Chainlink CCIP Variables
   address public crossChainAddress;
-  // bytes32 public s_lastReceivedMessageId ;
-  // bytes public  s_lastReceivedData ;
-  // mapping(uint64 => mapping(address => bool)) public allowlistedAddresses;
+ 
 
   struct ConstructorParams{
     address _linkAddress;
@@ -96,9 +92,9 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
     string _fetchSourceCode;
     uint32 _callbackGasLimit;
     uint256 _mintFee;
-    address _crossChainAddress;
-    address _implementation;
-    IERC6551Registry _registry;
+    // address _crossChainAddress;
+    // address _implementation;
+    // IERC6551Registry _registry;
   }
 
 
@@ -116,12 +112,12 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
     fetchSourceCode=params._fetchSourceCode;
     s_callbackGasLimit = params._callbackGasLimit;
     mintFee = params._mintFee;
+    tokenIdCounter = 1;
     linkAddress = params._linkAddress;
     wrapperAddress = params._wrapperAddress;
-    crossChainAddress = params._crossChainAddress;
-    tokenIdCounter = 1;
-    erc6551Implementation = params._implementation;
-    registry = params._registry;
+    // crossChainAddress = params._crossChainAddress;
+    // erc6551Implementation = params._implementation;
+    // registry = params._registry;
   }
 
   event OracleReturned(bytes32 requestId, bytes response, bytes error);
@@ -141,19 +137,19 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
     _;
   }
 
-  function createNewZexCraftNft(string memory prompt, bytes memory encryptedSecretsUrls,
+  function createNewZexCraftNft(string memory prompt,
     uint8 donHostedSecretsSlotID,
     uint64 donHostedSecretsVersion) external payable returns (uint256 requestId) {
     require(msg.value>=mintFee,"not enough fee");
-    return _createNewZexCraftNft(msg.sender,prompt,encryptedSecretsUrls,
+    return _createNewZexCraftNft(msg.sender,prompt,
      donHostedSecretsSlotID,
      donHostedSecretsVersion);
   }
 
-  function createNewZexCraftNftCrossChain(address owner,string memory prompt, bytes memory encryptedSecretsUrls,
+  function createNewZexCraftNftCrossChain(address owner,string memory prompt, 
     uint8 donHostedSecretsSlotID,
     uint64 donHostedSecretsVersion) external payable onlyCrosschain returns (uint256 requestId) {
-    return _createNewZexCraftNft(owner,prompt,  encryptedSecretsUrls,
+    return _createNewZexCraftNft(owner,prompt,  
      donHostedSecretsSlotID,
      donHostedSecretsVersion
      );
@@ -161,30 +157,26 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
 
   function createBabyZexCraftNft(
     IRelationship.NFT memory nft1,
-    IRelationship.NFT memory nft2, bytes memory encryptedSecretsUrls,
+    IRelationship.NFT memory nft2, 
     uint8 donHostedSecretsSlotID,
     uint64 donHostedSecretsVersion
   ) external payable returns (uint256 requestId) {
     require(msg.value>=mintFee,"not enough fee");
-    return _createBabyZexCraftNft(nft1, nft2,encryptedSecretsUrls,
+    return _createBabyZexCraftNft(nft1, nft2,
      donHostedSecretsSlotID,
      donHostedSecretsVersion);
   }
 
-  function createBabyZexCraftNftCrosschain(IRelationship.NFT memory nft1,IRelationship.NFT memory nft2, bytes memory encryptedSecretsUrls,
+  function createBabyZexCraftNftCrosschain(IRelationship.NFT memory nft1,IRelationship.NFT memory nft2,
     uint8 donHostedSecretsSlotID,
     uint64 donHostedSecretsVersion) external onlyRelationship returns (uint256 requestId) {
-    return _createBabyZexCraftNft(nft1, nft2,encryptedSecretsUrls,
+    return _createBabyZexCraftNft(nft1, nft2,
      donHostedSecretsSlotID,
      donHostedSecretsVersion);
   }
 
 
-
-
-
-
-  function _createNewZexCraftNft(address owner,string memory prompt, bytes memory encryptedSecretsUrls,
+  function _createNewZexCraftNft(address owner,string memory prompt,
     uint8 donHostedSecretsSlotID,
     uint64 donHostedSecretsVersion) internal returns (uint256 requestId) {
     requestId = requestRandomness(v_callbackGasLimit, requestConfirmations, numWords);
@@ -214,13 +206,13 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
         chainId: 0,
         sourceChainSelector:0
       }),
-      encryptedSecretsUrls:encryptedSecretsUrls,
       donHostedSecretsSlotID:donHostedSecretsSlotID,
       donHostedSecretsVersion:donHostedSecretsVersion,
       args:args,
       requestId: requestId,
       tokenId: 0,
       owner:owner,
+      messageId:"", 
       account:address(0),
       status: Status.VRF_REQUESTED
     });
@@ -231,7 +223,7 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
 
   function _createBabyZexCraftNft(
     IRelationship.NFT memory nft1,
-    IRelationship.NFT memory nft2, bytes memory encryptedSecretsUrls,
+    IRelationship.NFT memory nft2,
     uint8 donHostedSecretsSlotID,
     uint64 donHostedSecretsVersion
   ) internal returns (uint256 requestId) {
@@ -249,10 +241,10 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
     zexCraftNftRequests[requestId] = ZexCraftNftRequest({
     nft1: nft1,
     nft2: nft2,
-    encryptedSecretsUrls:encryptedSecretsUrls,
     donHostedSecretsSlotID:donHostedSecretsSlotID,
     donHostedSecretsVersion:donHostedSecretsVersion,
     args:args,  
+    messageId:"", 
     tokenId:0,
     requestId: requestId,
       account:address(0),
@@ -274,15 +266,12 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
   ) internal {
     zexCraftNftRequests[_requestId].tokenId=tokenIdCounter;
     string[] memory args = zexCraftNftRequests[_requestId].args;
-    bytes memory encryptedSecretsUrls = zexCraftNftRequests[_requestId].encryptedSecretsUrls;
     uint8 donHostedSecretsSlotID = zexCraftNftRequests[_requestId].donHostedSecretsSlotID;
     uint64 donHostedSecretsVersion = zexCraftNftRequests[_requestId].donHostedSecretsVersion;
 
     FunctionsRequest.Request memory req;
     req.initializeRequestForInlineJavaScript(createSourceCode);
-    if (encryptedSecretsUrls.length > 0)
-      req.addSecretsReference(encryptedSecretsUrls);
-    else if (donHostedSecretsVersion > 0) {
+    if (donHostedSecretsVersion > 0) {
       req.addDONHostedSecrets(donHostedSecretsSlotID,donHostedSecretsVersion);
     }
     req.setArgs(args);
@@ -295,16 +284,31 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
   function _fetchZexCraftNft(
     uint256 _requestId
   )internal{
-    string[] memory args = zexCraftNftRequests[_requestId].args;
-    bytes memory encryptedSecretsUrls = zexCraftNftRequests[_requestId].encryptedSecretsUrls;
     uint8 donHostedSecretsSlotID = zexCraftNftRequests[_requestId].donHostedSecretsSlotID;
     uint64 donHostedSecretsVersion = zexCraftNftRequests[_requestId].donHostedSecretsVersion;
-
+    string[] memory args = zexCraftNftRequests[_requestId].args;
+    if(args.length==3){
+      string memory rarity = args[2];
+      args = new string[](4);
+      args[0] = "NEW_BORN";
+      args[1] = rarity;
+      args[2] = zexCraftNftRequests[_requestId].messageId;
+      args[3] = zexCraftNftRequests[_requestId].tokenId.toString();
+    }else{
+      string memory rarity = args[3];
+      args = new string[](8);
+      args[0] = "BREED";
+      args[1] = zexCraftNftRequests[_requestId].nft1.tokenURI;
+      args[2] = uint256(zexCraftNftRequests[_requestId].nft1.sourceChainSelector).toString();
+      args[3] = zexCraftNftRequests[_requestId].nft2.tokenURI;
+      args[4] = uint256(zexCraftNftRequests[_requestId].nft2.sourceChainSelector).toString();
+      args[5] = rarity;
+      args[6] = zexCraftNftRequests[_requestId].messageId;
+      args[7] = zexCraftNftRequests[_requestId].tokenId.toString();
+    }
     FunctionsRequest.Request memory req;
     req.initializeRequestForInlineJavaScript(fetchSourceCode);
-    if (encryptedSecretsUrls.length > 0)
-      req.addSecretsReference(encryptedSecretsUrls);
-    else if (donHostedSecretsVersion > 0) {
+    if (donHostedSecretsVersion > 0) {
       req.addDONHostedSecrets(donHostedSecretsSlotID,donHostedSecretsVersion);
     }
     req.setArgs(args);
@@ -324,7 +328,9 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
     if (response.length > 0) {
       uint256 _requestId = functionToVRFRequest[requestId];
       if(zexCraftNftRequests[_requestId].status == Status.GENERATE_REQUESTED){
+        string memory messageId = string(response);
         zexCraftNftRequests[_requestId].status = Status.FETCH_REQUESTED;
+        zexCraftNftRequests[_requestId].messageId = messageId;
         emit ZexCraftNftRequested(_requestId);
       }else{
         string memory tokenUri = string(response);
@@ -333,7 +339,7 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
         _setTokenURI(_tokenIdCounter, tokenUri);
         zexCraftNftRequests[_requestId].status = Status.MINTED;
         emit ZexCraftNFTCreated(_tokenIdCounter, tokenUri, zexCraftNftRequests[_requestId].owner);
-      }  
+      }
     }else{
       emit OracleReturned(requestId, response, err);
     }
@@ -394,14 +400,12 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
         bytes memory
     ) external pure returns (bool upkeepNeeded, bytes memory performData) {
         upkeepNeeded = true;
-        address logSender = bytes32ToAddress(log.topics[1]);
-        performData = abi.encode(logSender);
+        performData = log.data;
     }
     
     function performUpkeep(bytes calldata performData) external override {
-        // counted += 1;
-        address logSender = abi.decode(performData, (address));
-        // emit CountedBy(logSender);
+      uint256 _requestId = abi.decode(performData, (uint256));
+      _fetchZexCraftNft(_requestId);
     }
 
      function bytes32ToAddress(bytes32 _address) public pure returns (address) {

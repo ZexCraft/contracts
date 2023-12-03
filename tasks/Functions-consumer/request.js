@@ -17,9 +17,6 @@ const process = require("process")
 
 task("functions-request", "Initiates an on-demand request from a Functions zexcraft contract")
   .addParam("contract", "Address of the zexcraft contract to call")
-  .addParam("subid", "Billing subscription ID used to pay for the request")
-  .addParam("seed", "Seed of the Midjourney Generation")
-  .addParam("reqid", "RequestId of the initial request using VRF")
   .addOptionalParam(
     "simulate",
     "Flag indicating if source JS should be run locally before making an on-chain request",
@@ -48,16 +45,14 @@ task("functions-request", "Initiates an on-demand request from a Functions zexcr
   .setAction(async (taskArgs, hre) => {
     // Get the required parameters
     const contractAddr = taskArgs.contract
-    const subscriptionId = parseInt(taskArgs.subid)
-    const slotId = parseInt(taskArgs.slotid)
-    const callbackGasLimit = parseInt(taskArgs.callbackgaslimit)
-    const seed = taskArgs.seed
-    const vrfRequestId = taskArgs.reqid
+    const slotId = taskArgs.slotid
+    const callbackGasLimit = taskArgs.callbackgaslimit
 
     // Attach to the ZexCraftNFT contract
     const zexcraftFactory = await ethers.getContractFactory("ZexCraftNFT")
     const zexcraftContract = zexcraftFactory.attach(contractAddr)
-
+    const prompt = "Rich African with Poor American"
+    const subscriptionId = 1768
     // Get requestConfig from the specified config file
     const requestConfig = require(path.isAbsolute(taskArgs.configpath)
       ? taskArgs.configpath
@@ -125,7 +120,6 @@ task("functions-request", "Initiates an on-demand request from a Functions zexcr
     )
 
     // Handle encrypted secrets
-    let encryptedSecretsReference = []
     let globalVersion
     let gistUrl
     if (
@@ -189,15 +183,9 @@ task("functions-request", "Initiates an on-demand request from a Functions zexcr
     if (networks[network.name].nonce) {
       overrides.nonce = networks[network.name].nonce
     }
-    const requestTx = await zexcraftContract.mintNewZexCraftNft(
-      vrfRequestId,
-      seed,
-      "0x",
-      slotId,
-      globalVersion,
-      ["", "", "", "", ""],
-      subscriptionId
-    )
+    console.log("Slot Id: ", slotId)
+    console.log("Global Version: ", globalVersion)
+    const requestTx = await zexcraftContract.createNewZexCraftNft(prompt, "0x", slotId, globalVersion)
     const requestTxReceipt = await requestTx.wait(1)
     if (network.name !== "localFunctionsTestnet") {
       spinner.info(

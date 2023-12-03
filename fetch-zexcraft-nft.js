@@ -16,9 +16,8 @@ const AUTH_HEADERS = {
 const type = args[0]
 if (type == "NEW_BORN") {
   const rarityNumber = args[1]
-  const originChain = args[2]
-  const seed = args[3]
-  const tokenId = args[4]
+  const seed = args[2]
+  const tokenId = args[3]
 
   const rarity = getRarity(rarityNumber)
 
@@ -59,7 +58,7 @@ if (type == "NEW_BORN") {
       },
       {
         trait_type: "originChain",
-        value: getChain(originChain),
+        value: "avalancheFuji",
       },
       {
         trait_type: "prompt",
@@ -82,9 +81,9 @@ if (type == "NEW_BORN") {
   return await storeInIPFS(metadataString)
 } else {
   const nft1TokenURI = args[1]
-  const nft1Chain = args[2]
+  const nft1ChainSelector = args[2]
   const nft2TokenURI = args[3]
-  const nft2Chain = args[4]
+  const nft2ChainSelector = args[4]
   const rarityNumber = args[5]
   const seed = args[6]
   const tokenId = args[7]
@@ -166,11 +165,11 @@ if (type == "NEW_BORN") {
       },
       {
         trait_type: "nft1_chain",
-        value: getChain(nft1Chain),
+        value: getChain(nft1ChainSelector),
       },
       {
         trait_type: "nft2_chain",
-        value: getChain(nft2Chain),
+        value: getChain(nft2ChainSelector),
       },
       {
         trait_type: "kind",

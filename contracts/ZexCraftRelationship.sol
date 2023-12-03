@@ -55,18 +55,6 @@ contract ZexCraftRelationship is CCIPReceiver, ConfirmedOwner{
        allowlistedAddresses[nft2.sourceChainSelector][nft2.contractAddress]=true;
     }
 
-
-  function addAllowListedAddresses(uint64[] memory sourceChainSelector,address[] memory sender) external onlyOwner {
-    require(sourceChainSelector.length==sender.length,"invalid length");
-    for(uint i=0;i<sourceChainSelector.length;i++)
-    {
-      allowlistedAddresses[sourceChainSelector[i]][sender[i]]=true;
-    } 
-  }
-
-
-
-
   function isValidSigner(address signer) public view returns(bool)
   {
     return IERC6551Account(payable(nfts[1].contractAddress)).isSigner(signer)|| IERC6551Account(payable(nfts[1].contractAddress)).isSigner(signer);

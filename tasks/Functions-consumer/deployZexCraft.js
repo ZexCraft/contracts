@@ -14,7 +14,8 @@ task("functions-deploy-zexcraft", "Deploys the ZexCraftNFT contract")
     const accountRegistry = networks[network.name]["accountRegistry"]
     const donId = "0x66756e2d657468657265756d2d7365706f6c69612d3100000000000000000000"
     const relRegistry = "0x0429A2Da7884CA14E53142988D5845952fE4DF6a"
-    const sourceCode = fs.readFileSync("./create-zexcraft-nft.js").toString()
+    const generateSourceCode = fs.readFileSync("./generate-zexcraft-nft.js").toString()
+    const fetchSourceCode = fs.readFileSync("./fetch-zexcraft-nft.js").toString()
     const callbackGasLimit = "300000"
     const mintFee = "0"
     const crossChainAddress = "0x0429A2Da7884CA14E53142988D5845952fE4DF6a"
@@ -23,19 +24,20 @@ task("functions-deploy-zexcraft", "Deploys the ZexCraftNFT contract")
     await run("compile")
 
     const zexCraftContractFactory = await ethers.getContractFactory("ZexCraftNFT")
-    const zexCraftContract = await zexCraftContractFactory.deploy(
+    const zexCraftContract = await zexCraftContractFactory.deploy([
       linkToken,
       linkWrapper,
       router,
       donId,
       relRegistry,
-      sourceCode,
+      generateSourceCode,
+      fetchSourceCode,
       callbackGasLimit,
       mintFee,
-      crossChainAddress,
-      implementation,
-      accountRegistry
-    )
+      // crossChainAddress,
+      // implementation,
+      // accountRegistry
+    ])
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
@@ -63,17 +65,20 @@ task("functions-deploy-zexcraft", "Deploys the ZexCraftNFT contract")
         await run("verify:verify", {
           address: zexCraftContract.address,
           constructorArguments: [
-            linkToken,
-            linkWrapper,
-            router,
-            donId,
-            relRegistry,
-            sourceCode,
-            callbackGasLimit,
-            mintFee,
-            crossChainAddress,
-            implementation,
-            accountRegistry,
+            [
+              linkToken,
+              linkWrapper,
+              router,
+              donId,
+              relRegistry,
+              generateSourceCode,
+              fetchSourceCode,
+              callbackGasLimit,
+              mintFee,
+              // crossChainAddress,
+              // implementation,
+              // accountRegistry
+            ],
           ],
         })
         console.log("Contract verified")

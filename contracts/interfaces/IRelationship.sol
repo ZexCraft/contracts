@@ -12,5 +12,5 @@ interface IRelationship{
     uint256 chainId;
   }
 
-    function initialize(NFT memory nft1, NFT memory nft2) external;
+    function initialize(NFT memory nft1, NFT memory nft2,address zexCraftAddress) external;
 }

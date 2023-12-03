@@ -48,6 +48,7 @@ contract ZexCraftERC6551Account is IERC165, IERC1271, IERC6551Account, IERC6551E
     bytes memory data,
     uint8 operation
   ) internal virtual returns (bytes memory result) {
+    require(_isValidSigner(msg.sender), "Invalid signer");
     ++state;
 
     bool success;

@@ -1,25 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
-
-
-
+import "../interfaces/IERC6551Registry.sol";
 import "@openzeppelin/contracts/interfaces/IERC721.sol";
 import "@openzeppelin/contracts/utils/Create2.sol";
 
-import "./interfaces/IERC6551Registry.sol";
-
-
-contract ZexCraftERC6551Registry is IERC6551Registry{
+contract ZexCraftERC6551RegistryCrossChain is IERC6551Registry {
 
   error InitializationFailed();
-  address public immutable i_implementation;
+  address immutable i_implementation;
   
   mapping(address => bool) public accountExists;
 
-  constructor(address implementation){
+  constructor(address implementation) {
     i_implementation = implementation;
   }
+
 
 
 
@@ -34,6 +30,25 @@ contract ZexCraftERC6551Registry is IERC6551Registry{
     return _createAccount(implementation, chainId, tokenContract, tokenId);
    
   }
+
+
+  function createAccountAndCall(
+    address implementation,
+    uint256 chainId,
+    address tokenContract,
+    uint256 tokenId,
+    uint256 salt,
+    bytes memory initData,
+    address crossChainContract
+  ) external payable returns (address) {
+  address accountAddress=_createAccount(implementation, chainId, tokenContract, tokenId);
+  (bool success,)=crossChainContract.call{value: msg.value}(abi.encodeWithSignature("createCrosschainImport(address,uint256,address,address,uint8)", tokenContract,tokenId,msg.sender,accountAddress,0));
+  require(success,"Failed to create crosschain import");
+
+  return accountAddress;
+  }
+
+
 
   function _createAccount(
     address implementation,
@@ -96,6 +111,4 @@ contract ZexCraftERC6551Registry is IERC6551Registry{
   function isAccount(address accountAddress) external view override returns (bool) {
     return accountExists[accountAddress];
   }
-
-
 }

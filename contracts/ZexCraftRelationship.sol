@@ -2,22 +2,20 @@
 pragma solidity ^0.8.19;
 
 import "./interfaces/IRelationship.sol";
-
-
+import "./interfaces/IZexCraftNFT.sol";
 
 contract ZexCraftRelationship{
     uint256 public state;
 
     IRelationship.NFT[2] public nfts;
 
+    address public zexCraftAddress;
 
-    event RelationshipCreated(IRelationship.NFT nft1,IRelationship.NFT nft2);
-
-    function intialize(IRelationship.NFT memory nft1,IRelationship.NFT memory nft2) external
+    function intialize(IRelationship.NFT memory nft1,IRelationship.NFT memory nft2,address _zexCraftAddress) external
     {
        nfts[0]=nft1;
        nfts[1]=nft2;
-       emit RelationshipCreated(nft1,nft2);
+       zexCraftAddress=_zexCraftAddress;
     }
 
 
@@ -29,6 +27,7 @@ contract ZexCraftRelationship{
     bytes[2] memory signatures
   ) external payable virtual returns (bytes memory result) {
     // TODO: Check if both the signatures are valid
+    require(msg.sender==nfts[0].ownerDuringMint||msg.sender==nfts[1].ownerDuringMint,"Invalid sender");
     require(operation == 0, "Only call operations are supported");
     ++state;
 
@@ -43,9 +42,9 @@ contract ZexCraftRelationship{
   }
 
 
-  function getCreateBabyData()public view returns(bytes memory)
-  {
-    return abi.encodeWithSignature("createBabyZexCraftNft((uint256,string,address,address,uint256),(uint256,string,address,address,uint256))",nfts[0],nfts[1]);
+  function createBaby() external {
+    require(msg.sender==nfts[0].ownerDuringMint||msg.sender==nfts[1].ownerDuringMint,"Invalid sender");
+    IZexCraftNFT(zexCraftAddress).createBabyZexCraftNft(nfts[0],nfts[1]);
   }
 
 }

@@ -55,7 +55,12 @@ contract ZexCraftRelationship is CCIPReceiver, ConfirmedOwner{
        allowlistedAddresses[nft2.sourceChainSelector][nft2.contractAddress]=true;
     }
 
-  function isValidSigner(address signer) public view returns(bool)
+  function isValidSigner(address signer) external view returns(bool)
+  {
+    return _isValidSigner(signer);  
+  }
+
+  function _isValidSigner(address signer) internal view returns(bool)
   {
     return IERC6551Account(payable(nfts[1].contractAddress)).isSigner(signer)|| IERC6551Account(payable(nfts[1].contractAddress)).isSigner(signer);
   }
@@ -68,7 +73,7 @@ contract ZexCraftRelationship is CCIPReceiver, ConfirmedOwner{
     bytes[2] memory signatures
   ) external payable virtual returns (bytes memory result) {
     // TODO: Check if both the signatures are valid
-    require(isValidSigner(msg.sender),"Invalid sender");
+    require(_isValidSigner(msg.sender),"Invalid sender");
     require(operation == 0, "Only call operations are supported");
     ++state;
 
@@ -86,7 +91,7 @@ contract ZexCraftRelationship is CCIPReceiver, ConfirmedOwner{
   function createBaby(bytes memory parterSig) external payable 
   {
     // TODO: Verify partner signature
-    require(isValidSigner(msg.sender),"Invalid signer");
+    require(_isValidSigner(msg.sender),"Invalid signer");
     IZexCraftNFT(zexCraftAddress).createBabyZexCraftNft{value:msg.value}(nfts[0],nfts[1]);
   }
 
@@ -104,7 +109,7 @@ contract ZexCraftRelationship is CCIPReceiver, ConfirmedOwner{
  if(any2EvmMessage.destTokenAmounts.length != 0&& any2EvmMessage.destTokenAmounts[0].amount>=crosschainMintFee){
             (address sender,bytes memory partnerSig)=abi.decode(any2EvmMessage.data, (address,bytes));
             // TODO: Verify partner sig
-            require(isValidSigner(sender),"Invalid signer");
+            require(_isValidSigner(sender),"Invalid signer");
             IZexCraftNFT(zexCraftAddress).createBabyZexCraftNftCrosschain(nfts[0],nfts[1]);
           }
           else{
@@ -118,5 +123,10 @@ contract ZexCraftRelationship is CCIPReceiver, ConfirmedOwner{
       emit MessageReceived(any2EvmMessage.messageId, any2EvmMessage.data);
     }
 
+  function getParents() external view returns(address parent1,address parent2)
+  {
+    parent1=nfts[0].contractAddress;
+    parent2=nfts[1].contractAddress;
+  }
 
 }

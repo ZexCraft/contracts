@@ -72,7 +72,7 @@ contract ZexCraftRelationshipRegistry is CCIPReceiver, ConfirmedOwner{
         ) 
     {
         (IRelationship.NFT memory nft1,IRelationship.NFT memory nft2)=abi.decode(any2EvmMessage.data, (IRelationship.NFT,IRelationship.NFT));
-        if(nft1.chainId!=block.chainid)
+        if(nft1.chainId==block.chainid)
         {
             nft1=_getNft(nft1.contractAddress);
         }

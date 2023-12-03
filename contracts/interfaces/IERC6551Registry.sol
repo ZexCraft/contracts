@@ -38,7 +38,7 @@ interface IERC6551Registry {
     bytes calldata initData
   ) external payable returns (address);
 
-    function isAccount(address account) external view returns (bool);
+  function isAccount(address account) external view returns (bool);
 
   /// @dev Returns the computed address of a token bound account
   ///
@@ -50,4 +50,6 @@ interface IERC6551Registry {
     uint256 tokenId,
     uint256 salt
   ) external view returns (address);
+
+
 }

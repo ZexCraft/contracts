@@ -93,7 +93,7 @@ contract ZexCraftERC6551Registry is IERC6551Registry{
       );
   }
 
-  function isAccount(address accountAddress) external view override returns (bool) {
+  function isAccount(address accountAddress) external view  returns (bool) {
     return accountExists[accountAddress];
   }
 

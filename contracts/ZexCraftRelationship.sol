@@ -17,7 +17,8 @@ contract ZexCraftRelationship is CCIPReceiver, ConfirmedOwner{
     address public zexCraftAddress;
 
     bool public isInitialized;
-
+  bytes32 public s_lastReceivedMessageId;
+  bytes public  s_lastReceivedData ;
     address public router;
     uint256 public crosschainMintFee;
   mapping(uint64=>mapping(address=>bool)) public allowlistedAddresses;
@@ -50,16 +51,12 @@ contract ZexCraftRelationship is CCIPReceiver, ConfirmedOwner{
        nfts[0]=nft1;
        nfts[1]=nft2;
        zexCraftAddress=_zexCraftAddress;
-       _addAllowListedAddresses([nft1.sourceChainSelector,nft2.sourceChainSelector],[nft1.contractAddress,nft2.contractAddress]);
+       allowlistedAddresses[nft1.sourceChainSelector][nft1.contractAddress]=true;
+       allowlistedAddresses[nft2.sourceChainSelector][nft2.contractAddress]=true;
     }
 
 
   function addAllowListedAddresses(uint64[] memory sourceChainSelector,address[] memory sender) external onlyOwner {
-    _addAllowListedAddresses(sourceChainSelector,sender,true);
-  }
-
-
-  function _addAllowListedAddresses(uint64[] memory sourceChainSelector,address[] memory sender) internal {
     require(sourceChainSelector.length==sender.length,"invalid length");
     for(uint i=0;i<sourceChainSelector.length;i++)
     {
@@ -68,9 +65,11 @@ contract ZexCraftRelationship is CCIPReceiver, ConfirmedOwner{
   }
 
 
-  function isValidSigner(address signer) external view returns(bool)
+
+
+  function isValidSigner(address signer) public view returns(bool)
   {
-    return IERC6551Account(nfts[1].contractAddress).isSigner(signer)|| IERC6551Account(nfts[1].contractAddress).isSigner(signer);
+    return IERC6551Account(payable(nfts[1].contractAddress)).isSigner(signer)|| IERC6551Account(payable(nfts[1].contractAddress)).isSigner(signer);
   }
 
    function execute(
@@ -118,7 +117,7 @@ contract ZexCraftRelationship is CCIPReceiver, ConfirmedOwner{
             (address sender,bytes memory partnerSig)=abi.decode(any2EvmMessage.data, (address,bytes));
             // TODO: Verify partner sig
             require(isValidSigner(sender),"Invalid signer");
-            IZexCraft(zexCraft).createBabyZexCraftNftCrosschain(nfts[0],nfts[1]);
+            IZexCraftNFT(zexCraftAddress).createBabyZexCraftNftCrosschain(nfts[0],nfts[1]);
           }
           else{
             emit OperationFailed();

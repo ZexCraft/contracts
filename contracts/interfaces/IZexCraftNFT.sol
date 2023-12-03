@@ -10,6 +10,11 @@ interface IZexCraftNFT{
         IRelationship.NFT memory nft2
     ) external returns (uint256);
 
+  function createBabyZexCraftNft(
+    IRelationship.NFT memory nft1,
+    IRelationship.NFT memory nft2
+  ) external payable returns (uint256 requestId);
+
 
     function createNewZexCraftNftCrossChain(
         address creator,

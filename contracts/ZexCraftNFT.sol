@@ -62,8 +62,7 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
   uint256 public mintFee;
   address public linkAddress;
   address public wrapperAddress;
-  IERC6551Registry public registry;
-  address public erc6551Implementation;
+  IERC6551Registry public accountRegistry;
   mapping(address=>bool) public accounts;
   mapping(uint256 => ZexCraftNftRequest) public zexCraftNftRequests;
   mapping(bytes32 => uint256) public functionToVRFRequest;
@@ -93,7 +92,6 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
     uint32 _callbackGasLimit;
     uint256 _mintFee;
     // address _crossChainAddress;
-    // address _implementation;
     // IERC6551Registry _registry;
   }
 
@@ -116,8 +114,7 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
     linkAddress = params._linkAddress;
     wrapperAddress = params._wrapperAddress;
     // crossChainAddress = params._crossChainAddress;
-    // erc6551Implementation = params._implementation;
-    // registry = params._registry;
+    // accountRegistry = params._registry;
   }
 
   event OracleReturned(bytes32 requestId, bytes response, bytes error);
@@ -365,9 +362,9 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
 
   
   function _deployAccount(address tokenAddress, uint256 _tokenId) internal{
-    address account=registry.account(erc6551Implementation, block.chainid, tokenAddress, _tokenId, 0);
+    address account=accountRegistry.account(address(0), block.chainid, tokenAddress, _tokenId, 0);
     require(accounts[account]==false,"already deployed");
-    account = registry.createAccount{value: 0}(erc6551Implementation, block.chainid, tokenAddress, _tokenId, 0, "0x");
+    account = accountRegistry.createAccount{value: 0}(address(0), block.chainid, tokenAddress, _tokenId, 0, "0x");
     zexCraftNftRequests[tokenIdToZexCraftNftRequest[_tokenId]].account = account;
     accounts[account]=true;
     emit ZexCraftAccountDeployed(tokenAddress,_tokenId,account);

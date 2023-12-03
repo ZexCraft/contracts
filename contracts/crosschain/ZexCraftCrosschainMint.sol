@@ -27,18 +27,16 @@ contract ZexCraftCrosschainMint{
 
     uint64 public destinationChainSelector = 14767482510784806043;
 
-    IERC6551Registry public zexCraftRegistry;
     address public baseChainAddress;
 
     event MessageSent(bytes32 messageId);
 
-    constructor(address router, address link, address _zexCraftNftContract,address _baseChainAddress,IERC6551Registry _zexCraftRegistry,uint256 _mintFee,address _ccipToken) {
+    constructor(address router, address link, address _zexCraftNftContract,address _baseChainAddress,uint256 _mintFee,address _ccipToken) {
         i_router = router;
         i_link = link;
         LinkTokenInterface(i_link).approve(i_router, type(uint256).max);
 
         zexCraftNftContract = _zexCraftNftContract;
-        zexCraftRegistry = _zexCraftRegistry;
         mintFee = _mintFee;
         ccipToken = _ccipToken;
         baseChainAddress = _baseChainAddress;

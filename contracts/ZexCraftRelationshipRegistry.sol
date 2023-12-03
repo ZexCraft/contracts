@@ -23,6 +23,8 @@ contract ZexCraftRelationshipRegistry is CCIPReceiver, ConfirmedOwner{
   bytes32 public s_lastReceivedMessageId ;
   bytes public  s_lastReceivedData ;
 
+  uint64 public constant chainSelector=14767482510784806043;
+
 
   mapping(uint64 => mapping(address => bool)) public allowlistedAddresses;
 
@@ -133,7 +135,7 @@ contract ZexCraftRelationshipRegistry is CCIPReceiver, ConfirmedOwner{
         (uint256 chainId, address nftAddress, uint256 tokenId)=IERC6551Account(payable(account)).token();
         address owner=IERC721(nftAddress).ownerOf(tokenId);
         string memory tokenUri=IERC721(nftAddress).tokenURI(tokenId);
-        return IRelationship.NFT(tokenId,tokenUri,owner,nftAddress,chainId);
+        return IRelationship.NFT(tokenId,tokenUri,owner,nftAddress,chainId,chainSelector);
     }
 
     function isRelationship(address _address) external view returns (bool) {

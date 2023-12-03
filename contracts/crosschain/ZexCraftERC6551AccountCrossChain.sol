@@ -23,8 +23,6 @@ interface IERC6551Executable {
 }
 
 contract ZexCraftERC6551AccountCrossChain is IERC165, IERC1271, IERC6551Account, IERC6551Executable {
-
-    
     enum PayFeesIn {
         Native,
         LINK
@@ -35,20 +33,23 @@ contract ZexCraftERC6551AccountCrossChain is IERC165, IERC1271, IERC6551Account,
     address public immutable i_link;
     address public zexCraftRelationshipRegistry;
     uint256 public mintFee ;
+    bool public isInitialized;
     address public ccipToken;
     mapping(address=>uint256) public depositBalances;
     IERC6551Registry public accountRegistry;
 
     uint64 public destinationChainSelector = 14767482510784806043;
+    uint64 public sourceChainSelector ;
     address public authorized;
 
-    constructor(address router, address link, address _zexCraftRelationshipRegistry,address _ccipToken) {
+    constructor(address router, address link, address _zexCraftRelationshipRegistry,address _ccipToken, uint64 _sourceChainSelector) {
         i_router = router;
         i_link = link;
         LinkTokenInterface(i_link).approve(i_router, type(uint256).max);
 
         zexCraftRelationshipRegistry = _zexCraftRelationshipRegistry;
         ccipToken = _ccipToken;
+        sourceChainSelector = _sourceChainSelector;
         authorized=msg.sender;
     }
 
@@ -56,12 +57,15 @@ contract ZexCraftERC6551AccountCrossChain is IERC165, IERC1271, IERC6551Account,
 
     receive() external payable {}
 
-    function setAccountRegistry(IERC6551Registry _accountRegistry) public 
-    {
-        require(msg.sender==authorized,"Not authorized");
-        accountRegistry=_accountRegistry;
+    modifier onlyOnce(){
+        require(!isInitialized,"Not authorized");
+        _;
     }
- 
+
+    function initialize(address _accountRegistry) external onlyOnce {
+        accountRegistry = IERC6551Registry(_accountRegistry);
+        isInitialized=true;
+    }
 
     function depositLink(uint amount) public {
         require(LinkTokenInterface(i_link).allowance(msg.sender, address(this))>=amount, "Unable to transfer");
@@ -69,31 +73,23 @@ contract ZexCraftERC6551AccountCrossChain is IERC165, IERC1271, IERC6551Account,
         depositBalances[msg.sender] += amount;
     }
 
-  function getCreateRelationshipData(address otherAccount,bytes[2] memory signatures)public pure returns(bytes memory)
-  {
-    return abi.encodeWithSignature("createRelationship(address,bytes[2])",otherAccount,signatures);
-  }
-
-//   function createRelationship(address relationshipRegistry,address otherAccount,bytes[2] memory signatures) external returns (address) {
-//     return abi.decode(_execute(relationshipRegistry, 0, getCreateRelationshipData(otherAccount,signatures), 0), (address));
-//   }
- 
 
 
-function createRelationship(address partnerAccount,uint256 chainId, PayFeesIn payFeesIn, bytes memory partnerSig) public payable{
-    // TODO: Verify partner Signature too
+function createRelationship(address partnerAccount,uint256 partnerChainid, PayFeesIn payFeesIn, bytes memory partnerSig) public payable{
+    // TODO: Verify partner Signature 
     require(_isValidSigner(msg.sender), "Invalid signer");
     IRelationship.NFT memory nft1;
-    if(chainId==block.chainid)
+    if(partnerChainid==block.chainid)
     {
         nft1=_getNft(partnerAccount);
-    }else if(chainId==43113 ){
+    }else if(partnerChainid==43113 ){
         nft1=IRelationship.NFT({
             tokenId: 0,
             tokenURI: "",
             ownerDuringMint: partnerAccount,
             contractAddress: address(0),
-            chainId: chainId
+            chainId: partnerChainid,
+            sourceChainSelector: destinationChainSelector
         });
     }else{
         revert("Invalid chainId");
@@ -135,6 +131,12 @@ function createRelationship(address partnerAccount,uint256 chainId, PayFeesIn pa
         
     }
 
+
+  function createBabyZexCraftNft(address relationship, bytes memory partnerSig) public payable{
+    require(_isValidSigner(msg.sender),"Invalid signer");
+
+    // TODO: Make crosschain call to relationship contract
+  } 
     
   function execute(
     address to,
@@ -218,6 +220,11 @@ function createRelationship(address partnerAccount,uint256 chainId, PayFeesIn pa
         (uint256 chainId, address nftAddress, uint256 tokenId)=IERC6551Account(payable(account)).token();
         address _owner=IERC721(nftAddress).ownerOf(tokenId);
         string memory tokenUri=IERC721(nftAddress).tokenURI(tokenId);
-        return IRelationship.NFT(tokenId,tokenUri,_owner,nftAddress,chainId);
+        return IRelationship.NFT(tokenId,tokenUri,_owner,nftAddress,chainId,sourceChainSelector );
     }
+
+
+     function isSigner(address signer) external view returns (bool) {
+        return _isValidSigner(signer);
+     }
 }

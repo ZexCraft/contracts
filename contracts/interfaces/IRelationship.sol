@@ -10,6 +10,7 @@ interface IRelationship{
     address ownerDuringMint;
     address contractAddress;
     uint256 chainId;
+    uint64 sourceChainSelector;
   }
 
     function initialize(NFT memory nft1, NFT memory nft2,address zexCraftAddress) external;

@@ -98,12 +98,15 @@ contract ZexCraftERC6551Account is IERC165, IERC1271, IERC6551Account, IERC6551E
 
   function owner() public view virtual returns (address) {
     (uint256 chainId, address tokenContract, uint256 tokenId) = token();
-    if (chainId != block.chainid) return address(0);
 
     return IERC721(tokenContract).ownerOf(tokenId);
   }
 
   function _isValidSigner(address signer) internal view virtual returns (bool) {
     return signer == owner();
+  }
+
+  function isSigner(address signer) external view  returns (bool) {
+    return _isValidSigner(signer);
   }
 }

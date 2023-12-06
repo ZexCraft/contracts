@@ -16,10 +16,9 @@ contract ZexCraftPowerups{
     AggregatorV3Interface public priceFeed;
 
     address public owner;
-    constructor(Powerup[] memory _powerups)
+    constructor()
     {
         owner=msg.sender;
-        _addPowerups(_powerups);
         priceFeed = AggregatorV3Interface(0x694AA1769357215DE4FAC081bf1f309aDC325306);
     }
 

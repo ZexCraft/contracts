@@ -1,17 +1,19 @@
 const { networks } = require("../../networks")
 
 task("deploy-registry", "Deploys the ZexCraftERC6551Registry contract")
-  .addParam("implementation", "Address of the ZexCraftERC6551Account Implementation contract")
   .addOptionalParam("verify", "Set to true to verify contract", false, types.boolean)
   .setAction(async (taskArgs) => {
     console.log(`Deploying ZexCraftERC6551Registry contract to ${network.name}`)
 
-    const implementation = taskArgs.implementation
     console.log("\n__Compiling Contracts__")
     await run("compile")
 
+    const params = {
+      implementation: networks[network.name].implementation,
+    }
+
     const zexCraftContractFactory = await ethers.getContractFactory("ZexCraftERC6551Registry")
-    const zexCraftContract = await zexCraftContractFactory.deploy(implementation)
+    const zexCraftContract = await zexCraftContractFactory.deploy(params.implementation)
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
@@ -38,7 +40,7 @@ task("deploy-registry", "Deploys the ZexCraftERC6551Registry contract")
         console.log("\nVerifying contract...")
         await run("verify:verify", {
           address: zexCraftContract.address,
-          constructorArguments: [implementation],
+          constructorArguments: [params.implementation],
         })
         console.log("Contract verified")
       } catch (error) {

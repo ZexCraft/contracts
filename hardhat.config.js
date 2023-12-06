@@ -45,13 +45,23 @@ module.exports = {
   },
   etherscan: {
     apiKey: {
-      mainnet: networks.ethereum.verifyApiKey,
-      avalanche: networks.avalanche.verifyApiKey,
-      polygon: networks.polygon.verifyApiKey,
       sepolia: networks.ethereumSepolia.verifyApiKey,
       polygonMumbai: networks.polygonMumbai.verifyApiKey,
       avalancheFujiTestnet: networks.avalancheFuji.verifyApiKey,
+      bscTestnet: networks.binanceTestnet.verifyApiKey,
+      optimisticGoerli: networks.baseGoerliTestnet.verifyApiKey,
+      baseGoerli: networks.baseGoerliTestnet.verifyApiKey,
     },
+    customChains: [
+      {
+        network: "baseGoerli",
+        chainId: 84531,
+        urls: {
+          apiURL: "https://api-goerli.basescan.org/api",
+          browserURL: "https://goerli.basescan.org/",
+        },
+      },
+    ],
   },
   gasReporter: {
     enabled: REPORT_GAS,

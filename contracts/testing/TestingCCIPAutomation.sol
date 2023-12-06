@@ -58,11 +58,11 @@ contract TestingCCIPAutomation is ILogAutomation {
     // test ccip
     function createCrossChainMint(string memory prompt, PayFeesIn payFeesIn) public payable{
         require(IERC20(ccipToken).allowance(msg.sender,address(this))>=mintFee,"Approve tokens first");
-       
-        (Client.EVM2AnyMessage memory message,uint256 fee)=getCreateCrosschainMint(  prompt,  payFeesIn);
+        IERC20(ccipToken).transferFrom(msg.sender,address(this),mintFee);
+        (Client.EVM2AnyMessage memory message,uint256 fee)=getCreateCrosschainMint(prompt,  payFeesIn);
 
         bytes32 messageId;
-
+        IERC20(ccipToken).approve(i_router, mintFee);   
         if (payFeesIn == PayFeesIn.LINK) {
             require(depositBalances[msg.sender]>=fee,"Insufficient LINK balance");
             depositBalances[msg.sender] -= fee;
@@ -80,6 +80,7 @@ contract TestingCCIPAutomation is ILogAutomation {
         }
         emit MessageSent(messageId);
     }
+
 
     function createCrosschainRelationship(address partnerAccount,uint256 partnerChainid, PayFeesIn payFeesIn, bytes memory partnerSig) public payable{
 
@@ -224,4 +225,6 @@ contract TestingCCIPAutomation is ILogAutomation {
         );
 
   }
+
+
 }

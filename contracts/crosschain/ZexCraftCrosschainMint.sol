@@ -58,6 +58,8 @@ contract ZexCraftCrosschainMint{
         
         (Client.EVM2AnyMessage memory message,uint256 fee)=getCreateCrosschainMint(  prompt,  payFeesIn);
         bytes32 messageId;
+        
+        IERC20(ccipToken).approve(i_router, mintFee);   
 
         if (payFeesIn == PayFeesIn.LINK) {
             require(depositBalances[msg.sender]>=fee,"Insufficient LINK balance");

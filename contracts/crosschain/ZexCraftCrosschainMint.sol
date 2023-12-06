@@ -21,15 +21,13 @@ contract ZexCraftCrosschainMint{
     address public immutable i_link;
     address public zexCraftNftContract;
     uint256 public mintFee ;
+    address public baseChainAddress;
     address public ccipToken;
-    
-    mapping(address=>uint256) public depoistBalances;
+   
+    mapping(address=>uint256) public depositBalances;
 
     uint64 public destinationChainSelector = 14767482510784806043;
 
-    address public baseChainAddress;
-
-    event MessageSent(bytes32 messageId);
 
     constructor(address router, address link, address _zexCraftNftContract,address _baseChainAddress,uint256 _mintFee,address _ccipToken) {
         i_router = router;
@@ -42,36 +40,29 @@ contract ZexCraftCrosschainMint{
         baseChainAddress = _baseChainAddress;
     }
 
-    receive() external payable {}
+    event MessageSent(bytes32 messageId);
+
+      event LinkDeposited(address sender,uint256 currentDeposit,uint256 totalDeposit);
+  
+
 
     function depositLink(uint amount) public {
         require(LinkTokenInterface(i_link).allowance(msg.sender, address(this))>=amount, "Unable to transfer");
         LinkTokenInterface(i_link).transferFrom(msg.sender, address(this), amount);
-        depoistBalances[msg.sender] += amount;
+        depositBalances[msg.sender] += amount;
+        emit LinkDeposited(msg.sender,amount,depositBalances[msg.sender]);
     }
 
     function createCrosschain(string memory prompt, PayFeesIn payFeesIn) public payable{
         require(IERC20(ccipToken).allowance(msg.sender,address(this))>=mintFee,"Approve tokens first");
-        Client.EVMTokenAmount[] memory tokenAmounts = new Client.EVMTokenAmount[](1);
-        tokenAmounts[0] = Client.EVMTokenAmount({token: ccipToken, amount: mintFee});
-         Client.EVM2AnyMessage memory message = Client.EVM2AnyMessage({
-            receiver: abi.encode(baseChainAddress),
-            data: abi.encode(msg.sender,prompt,zexCraftNftContract),
-            tokenAmounts: tokenAmounts,
-            extraArgs: "",
-            feeToken: payFeesIn == PayFeesIn.LINK ? i_link : address(0)
-        });
-
-        uint256 fee = IRouterClient(i_router).getFee(
-            destinationChainSelector,
-            message
-        );
-
+        
+        (Client.EVM2AnyMessage memory message,uint256 fee)=getCreateCrosschainMint(  prompt,  payFeesIn);
         bytes32 messageId;
 
         if (payFeesIn == PayFeesIn.LINK) {
-            require(depoistBalances[msg.sender]>=fee,"Insufficient LINK balance");
-            depoistBalances[msg.sender] -= fee;
+            require(depositBalances[msg.sender]>=fee,"Insufficient LINK balance");
+            depositBalances[msg.sender] -= fee;
+
             LinkTokenInterface(i_link).approve(i_router, fee);
             messageId = IRouterClient(i_router).ccipSend(
                 destinationChainSelector,
@@ -85,7 +76,25 @@ contract ZexCraftCrosschainMint{
             );
         }
         emit MessageSent(messageId);
-        
+    }
+
+
+    function getCreateCrosschainMint(string memory prompt, PayFeesIn payFeesIn) public view returns(Client.EVM2AnyMessage memory message,uint256 fee)
+    {
+        Client.EVMTokenAmount[] memory tokenAmounts = new Client.EVMTokenAmount[](1);
+        tokenAmounts[0] = Client.EVMTokenAmount({token: ccipToken, amount: mintFee});
+         message = Client.EVM2AnyMessage({
+            receiver: abi.encode(baseChainAddress),
+            data: abi.encode(msg.sender,prompt,zexCraftNftContract),
+            tokenAmounts: tokenAmounts,
+            extraArgs: "",
+            feeToken: payFeesIn == PayFeesIn.LINK ? i_link : address(0)
+        });
+
+         fee = IRouterClient(i_router).getFee(
+            destinationChainSelector,
+            message
+        );
     }
 
 }

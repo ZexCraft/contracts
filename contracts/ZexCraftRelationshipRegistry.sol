@@ -71,12 +71,12 @@ contract ZexCraftRelationshipRegistry is CCIPReceiver, ConfirmedOwner{
             abi.decode(any2EvmMessage.sender, (address))
         ) 
     {
-        (IRelationship.NFT memory nft1,IRelationship.NFT memory nft2)=abi.decode(any2EvmMessage.data, (IRelationship.NFT,IRelationship.NFT));
+        (IRelationship.NFT memory nft1,IRelationship.NFT memory nft2,bytes memory partnerSig)=abi.decode(any2EvmMessage.data, (IRelationship.NFT,IRelationship.NFT,bytes));
         if(nft1.chainId==block.chainid)
         {
             nft1=_getNft(nft1.contractAddress);
         }
-        address relationship=_createRelationship(nft1, nft2);
+        address relationship=_createRelationship(nft1, nft2,partnerSig);
         s_lastReceivedMessageId = any2EvmMessage.messageId;
         s_lastReceivedData = any2EvmMessage.data;
         emit RelationshipCreated(nft1.contractAddress, nft2.contractAddress, relationship);
@@ -84,15 +84,15 @@ contract ZexCraftRelationshipRegistry is CCIPReceiver, ConfirmedOwner{
 
 
 
-    function createRelationship(address otherAccount,  bytes[2] memory signatures) external onlyZexCraftERC6551Account(otherAccount) returns(address)   {
-        // TODO: Verify signatures with owner of NFTs using owner() function of ERC6551
+    function createRelationship(address otherAccount,  bytes memory otherAccountsignature) external onlyZexCraftERC6551Account(otherAccount) returns(address)   {
          IRelationship.NFT memory nft1=_getNft(msg.sender);
         IRelationship.NFT memory nft2=_getNft(otherAccount);
-        return _createRelationship(nft1,nft2);
+        return _createRelationship(nft1,nft2,otherAccountsignature);
     }
 
-    function _createRelationship(IRelationship.NFT memory nft1,IRelationship.NFT memory nft2) internal returns(address)
+    function _createRelationship(IRelationship.NFT memory nft1,IRelationship.NFT memory nft2,bytes memory otherAccountsignature) internal returns(address)
     {   
+        // TODO: Verify otherAccountsignature with owner of the other NFT using owner() function of ERC6551
         address relationship = _deployProxy(relationshipImplementation, 1);
         require(relationshipExists[relationship] == false, "Relationship already exists");
         

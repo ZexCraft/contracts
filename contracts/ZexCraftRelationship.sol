@@ -106,15 +106,11 @@ contract ZexCraftRelationship is CCIPReceiver, ConfirmedOwner{
             abi.decode(any2EvmMessage.sender, (address))
         ) 
     {
- if(any2EvmMessage.destTokenAmounts.length != 0&& any2EvmMessage.destTokenAmounts[0].amount>=crosschainMintFee){
-            (address sender,bytes memory partnerSig)=abi.decode(any2EvmMessage.data, (address,bytes));
+            (address sender,)=abi.decode(any2EvmMessage.data, (address,bytes));
             // TODO: Verify partner sig
             require(_isValidSigner(sender),"Invalid signer");
             IZexCraftNFT(zexCraftAddress).createBabyZexCraftNftCrosschain(nfts[0],nfts[1]);
-          }
-          else{
-            emit OperationFailed();
-          }
+         
            
         
 

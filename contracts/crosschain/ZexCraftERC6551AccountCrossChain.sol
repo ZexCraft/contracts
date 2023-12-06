@@ -39,7 +39,7 @@ contract ZexCraftERC6551AccountCrossChain is IERC165, IERC1271, IERC6551Account,
     IERC6551Registry public accountRegistry;
 
     uint64 public destinationChainSelector = 14767482510784806043;
-    uint64 public sourceChainSelector ;
+    uint64 public sourceChainSelector;
     address public authorized;
 
     constructor(address router, address link, address _zexCraftRelationshipRegistry,address _ccipToken, uint64 _sourceChainSelector) {
@@ -53,7 +53,6 @@ contract ZexCraftERC6551AccountCrossChain is IERC165, IERC1271, IERC6551Account,
         authorized=msg.sender;
     }
 
-    event MessageSent(bytes32 messageId);
 
     receive() external payable {}
 
@@ -66,49 +65,26 @@ contract ZexCraftERC6551AccountCrossChain is IERC165, IERC1271, IERC6551Account,
         accountRegistry = IERC6551Registry(_accountRegistry);
         isInitialized=true;
     }
+    event MessageSent(bytes32 messageId);
+
+      event LinkDeposited(address sender,uint256 currentDeposit,uint256 totalDeposit);
+  
+
 
     function depositLink(uint amount) public {
         require(LinkTokenInterface(i_link).allowance(msg.sender, address(this))>=amount, "Unable to transfer");
         LinkTokenInterface(i_link).transferFrom(msg.sender, address(this), amount);
         depositBalances[msg.sender] += amount;
+        emit LinkDeposited(msg.sender,amount,depositBalances[msg.sender]);
     }
 
 
 
-function createRelationship(address partnerAccount,uint256 partnerChainid, PayFeesIn payFeesIn, bytes memory partnerSig) public payable{
+  function createRelationship(address partnerAccount,uint256 partnerChainid, PayFeesIn payFeesIn, bytes memory partnerSig) public payable{
     // TODO: Verify partner Signature 
     require(_isValidSigner(msg.sender), "Invalid signer");
-    IRelationship.NFT memory nft1;
-    if(partnerChainid==block.chainid)
-    {
-        nft1=_getNft(partnerAccount);
-    }else if(partnerChainid==43113 ){
-        nft1=IRelationship.NFT({
-            tokenId: 0,
-            tokenURI: "",
-            ownerDuringMint: partnerAccount,
-            contractAddress: address(0),
-            chainId: partnerChainid,
-            sourceChainSelector: destinationChainSelector
-        });
-    }else{
-        revert("Invalid chainId");
-    }
     
-    IRelationship.NFT memory nft2=_getNft(msg.sender);
-    Client.EVM2AnyMessage memory message = Client.EVM2AnyMessage({
-            receiver: abi.encode(zexCraftRelationshipRegistry),
-            data: abi.encode(nft1,nft2),
-            tokenAmounts: new Client.EVMTokenAmount[](0),
-            extraArgs: "",
-            feeToken: payFeesIn == PayFeesIn.LINK ? i_link : address(0)
-        });
-
-        uint256 fee = IRouterClient(i_router).getFee(
-            destinationChainSelector,
-            message
-        );
-
+        (Client.EVM2AnyMessage memory message,uint256 fee)=getCreateRelationship(partnerAccount,partnerChainid,payFeesIn,partnerSig);
         bytes32 messageId;
 
         if (payFeesIn == PayFeesIn.LINK) {
@@ -131,13 +107,83 @@ function createRelationship(address partnerAccount,uint256 partnerChainid, PayFe
         
     }
 
-
-  function createBabyZexCraftNft(address relationship, bytes memory partnerSig) public payable{
-    require(_isValidSigner(msg.sender),"Invalid signer");
-
-    // TODO: Make crosschain call to relationship contract
-  } 
+  function getCreateRelationship(address partnerAccount,uint256 partnerChainid, PayFeesIn payFeesIn, bytes memory partnerSig) public view returns(Client.EVM2AnyMessage memory message, uint fee)
+  {
+      IRelationship.NFT memory nft1;
+      if(partnerChainid==block.chainid)
+      {
+        nft1=_getNft(partnerAccount);
+      }else if(partnerChainid==43113 ){
+        nft1=IRelationship.NFT({
+            tokenId: 0,
+            tokenURI: "",
+            ownerDuringMint: partnerAccount,
+            contractAddress: address(0),
+            chainId: partnerChainid,
+            sourceChainSelector: destinationChainSelector
+        });
+      }else{
+        revert("Invalid chainId");
+      }
     
+      IRelationship.NFT memory nft2=_getNft(msg.sender);
+      message = Client.EVM2AnyMessage({
+            receiver: abi.encode(zexCraftRelationshipRegistry),
+            data: abi.encode(nft1,nft2,partnerSig),
+            tokenAmounts: new Client.EVMTokenAmount[](0),
+            extraArgs: "",
+            feeToken: payFeesIn == PayFeesIn.LINK ? i_link : address(0)
+        });
+
+        fee = IRouterClient(i_router).getFee(
+            destinationChainSelector,
+            message
+        );
+
+  }
+
+
+  function createBabyZexCraftNft(address relationship, bytes memory partnerSig,PayFeesIn payFeesIn) public payable{
+    require(_isValidSigner(msg.sender),"Invalid signer");
+    
+      (Client.EVM2AnyMessage memory message ,uint256 fee) =getCreateBabyZexCraftNft(relationship,partnerSig,payFeesIn);
+
+        bytes32 messageId;
+        if (payFeesIn == PayFeesIn.LINK) {
+            require(depositBalances[msg.sender]>=fee,"Insufficient LINK balance");
+            depositBalances[msg.sender] -= fee;
+            LinkTokenInterface(i_link).approve(i_router, fee);
+            messageId = IRouterClient(i_router).ccipSend(
+                destinationChainSelector,
+                message
+            );
+        } else {
+            require(msg.value>=fee,"Insufficient ETH balance");
+            messageId = IRouterClient(i_router).ccipSend{value: fee}(
+                destinationChainSelector,
+                message
+            );
+        }
+
+        emit MessageSent(messageId);
+  } 
+  
+  function getCreateBabyZexCraftNft(address relationship, bytes memory partnerSig,PayFeesIn payFeesIn ) public view returns(Client.EVM2AnyMessage memory message,uint fee)
+  {  
+      message = Client.EVM2AnyMessage({
+            receiver: abi.encode(zexCraftRelationshipRegistry),
+            data: abi.encode(relationship,partnerSig),
+            tokenAmounts: new Client.EVMTokenAmount[](0),
+            extraArgs: "",
+            feeToken: payFeesIn == PayFeesIn.LINK ? i_link : address(0)
+        });
+
+         fee = IRouterClient(i_router).getFee(
+            destinationChainSelector,
+            message
+        );
+
+  }
   function execute(
     address to,
     uint256 value,

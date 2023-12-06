@@ -1,30 +1,27 @@
 const { networks } = require("../../networks")
 
-task("functions-deploy-testing-ccip-receiver", "Deploys the TestingCCIPReceiver contract")
+task("deploy-registry", "Deploys the ZexCraftERC6551Registry contract")
+  .addParam("implementation", "Address of the ZexCraftERC6551Account Implementation contract")
   .addOptionalParam("verify", "Set to true to verify contract", false, types.boolean)
   .setAction(async (taskArgs) => {
-    console.log(`Deploying TestingCCIPReceiver contract to ${network.name}`)
+    console.log(`Deploying ZexCraftERC6551Registry contract to ${network.name}`)
 
+    const implementation = taskArgs.implementation
     console.log("\n__Compiling Contracts__")
     await run("compile")
 
-    const params = {
-      router: networks.ethereumSepolia.ccipRouter,
-      mintFee: "10000000",
-    }
-
-    const testingContractFactory = await ethers.getContractFactory("TestingCCIPReceiver")
-    const testingContract = await testingContractFactory.deploy(params.router, params.mintFee)
+    const zexCraftContractFactory = await ethers.getContractFactory("ZexCraftERC6551Registry")
+    const zexCraftContract = await zexCraftContractFactory.deploy(implementation)
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
-        testingContract.deployTransaction.hash
+        zexCraftContract.deployTransaction.hash
       } to be confirmed...`
     )
 
-    await testingContract.deployTransaction.wait(networks[network.name].confirmations)
+    await zexCraftContract.deployTransaction.wait(networks[network.name].confirmations)
 
-    console.log("\nDeployed TestingCCIPReceiver contract to:", testingContract.address)
+    console.log("\nDeployed ZexCraftERC6551Registry contract to:", zexCraftContract.address)
 
     if (network.name === "localFunctionsTestnet") {
       return
@@ -40,8 +37,8 @@ task("functions-deploy-testing-ccip-receiver", "Deploys the TestingCCIPReceiver 
       try {
         console.log("\nVerifying contract...")
         await run("verify:verify", {
-          address: testingContract.address,
-          constructorArguments: [params.router, params.mintFee],
+          address: zexCraftContract.address,
+          constructorArguments: [implementation],
         })
         console.log("Contract verified")
       } catch (error) {
@@ -60,5 +57,5 @@ task("functions-deploy-testing-ccip-receiver", "Deploys the TestingCCIPReceiver 
       )
     }
 
-    console.log(`\n TestingCCIPReceiver contract deployed to ${testingContract.address} on ${network.name}`)
+    console.log(`\ZexCraftERC6551Registry contract deployed to ${zexCraftContract.address} on ${network.name}`)
   })

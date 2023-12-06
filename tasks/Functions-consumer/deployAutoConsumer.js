@@ -3,7 +3,7 @@ const { SubscriptionManager } = require("@chainlink/functions-toolkit")
 const { types } = require("hardhat/config")
 const { networks } = require("../../networks")
 
-task("functions-deploy-auto-consumer", "Deploys the AutomatedFunctionsConsumer contract")
+task("deploy-auto-consumer", "Deploys the AutomatedFunctionsConsumer contract")
   .addParam("subid", "Billing subscription ID used to pay for Functions requests")
   .addOptionalParam("verify", "Set to true to verify consumer contract", false, types.boolean)
   .addOptionalParam(

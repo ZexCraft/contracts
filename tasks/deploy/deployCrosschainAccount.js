@@ -1,27 +1,33 @@
 const { networks } = require("../../networks")
 
-task("functions-deploy-registry", "Deploys the ZexCraftERC6551Registry contract")
-  .addParam("implementation", "Address of the ZexCraftERC6551Account Implementation contract")
+task("deploy-crosschain-implementation", "Deploys the ZexCraftERC6551AccountCrossChain contract")
   .addOptionalParam("verify", "Set to true to verify contract", false, types.boolean)
   .setAction(async (taskArgs) => {
-    console.log(`Deploying ZexCraftERC6551Registry contract to ${network.name}`)
+    console.log(`Deploying ZexCraftERC6551AccountCrossChain contract to ${network.name}`)
 
-    const implementation = taskArgs.implementation
     console.log("\n__Compiling Contracts__")
     await run("compile")
 
-    const zexCraftContractFactory = await ethers.getContractFactory("ZexCraftERC6551Registry")
-    const zexCraftContract = await zexCraftContractFactory.deploy(implementation)
+    const params = {
+      router: networks[network.name],
+      link: "",
+      relRegistry: "",
+      ccipToken: "",
+      sourceChainSelector: "",
+    }
+
+    const crosschainAccountFactory = await ethers.getContractFactory("ZexCraftERC6551AccountCrossChain")
+    const crosschainAccount = await crosschainAccountFactory.deploy()
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
-        zexCraftContract.deployTransaction.hash
+        crosschainAccount.deployTransaction.hash
       } to be confirmed...`
     )
 
-    await zexCraftContract.deployTransaction.wait(networks[network.name].confirmations)
+    await crosschainAccount.deployTransaction.wait(networks[network.name].confirmations)
 
-    console.log("\nDeployed ZexCraftERC6551Registry contract to:", zexCraftContract.address)
+    console.log("\nDeployed ZexCraftERC6551AccountCrossChain contract to:", crosschainAccount.address)
 
     if (network.name === "localFunctionsTestnet") {
       return
@@ -37,8 +43,8 @@ task("functions-deploy-registry", "Deploys the ZexCraftERC6551Registry contract"
       try {
         console.log("\nVerifying contract...")
         await run("verify:verify", {
-          address: zexCraftContract.address,
-          constructorArguments: [implementation],
+          address: crosschainAccount.address,
+          constructorArguments: [],
         })
         console.log("Contract verified")
       } catch (error) {
@@ -57,5 +63,7 @@ task("functions-deploy-registry", "Deploys the ZexCraftERC6551Registry contract"
       )
     }
 
-    console.log(`\ZexCraftERC6551Registry contract deployed to ${zexCraftContract.address} on ${network.name}`)
+    console.log(
+      `\n ZexCraftERC6551AccountCrossChain contract deployed to ${crosschainAccount.address} on ${network.name}`
+    )
   })

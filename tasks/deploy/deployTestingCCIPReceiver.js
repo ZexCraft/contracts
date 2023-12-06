@@ -1,38 +1,30 @@
-const { types } = require("hardhat/config")
 const { networks } = require("../../networks")
 
-task("deploy-consumer", "Deploys the FunctionsConsumer contract")
+task("deploy-testing-ccip-receiver", "Deploys the TestingCCIPReceiver contract")
   .addOptionalParam("verify", "Set to true to verify contract", false, types.boolean)
   .setAction(async (taskArgs) => {
-    console.log(`Deploying FunctionsConsumer contract to ${network.name}`)
-
-    const functionsRouter = networks[network.name]["functionsRouter"]
-    const donIdBytes32 = hre.ethers.utils.formatBytes32String(networks[network.name]["donId"])
+    console.log(`Deploying TestingCCIPReceiver contract to ${network.name}`)
 
     console.log("\n__Compiling Contracts__")
     await run("compile")
 
-    const overrides = {}
-    // If specified, use the gas price from the network config instead of Ethers estimated price
-    if (networks[network.name].gasPrice) {
-      overrides.gasPrice = networks[network.name].gasPrice
-    }
-    // If specified, use the nonce from the network config instead of automatically calculating it
-    if (networks[network.name].nonce) {
-      overrides.nonce = networks[network.name].nonce
+    const params = {
+      router: networks.avalancheFuji.ccipRouter,
+      mintFee: "10000000",
     }
 
-    const consumerContractFactory = await ethers.getContractFactory("FunctionsConsumer")
-    const consumerContract = await consumerContractFactory.deploy(functionsRouter, donIdBytes32, overrides)
+    const testingContractFactory = await ethers.getContractFactory("TestingCCIPReceiver")
+    const testingContract = await testingContractFactory.deploy(params.router, params.mintFee)
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
-        consumerContract.deployTransaction.hash
+        testingContract.deployTransaction.hash
       } to be confirmed...`
     )
-    await consumerContract.deployTransaction.wait(networks[network.name].confirmations)
 
-    console.log("\nDeployed FunctionsConsumer contract to:", consumerContract.address)
+    await testingContract.deployTransaction.wait(networks[network.name].confirmations)
+
+    console.log("\nDeployed TestingCCIPReceiver contract to:", testingContract.address)
 
     if (network.name === "localFunctionsTestnet") {
       return
@@ -48,8 +40,8 @@ task("deploy-consumer", "Deploys the FunctionsConsumer contract")
       try {
         console.log("\nVerifying contract...")
         await run("verify:verify", {
-          address: consumerContract.address,
-          constructorArguments: [functionsRouter, donIdBytes32],
+          address: testingContract.address,
+          constructorArguments: [params.router, params.mintFee],
         })
         console.log("Contract verified")
       } catch (error) {
@@ -68,5 +60,5 @@ task("deploy-consumer", "Deploys the FunctionsConsumer contract")
       )
     }
 
-    console.log(`\nFunctionsConsumer contract deployed to ${consumerContract.address} on ${network.name}`)
+    console.log(`\n TestingCCIPReceiver contract deployed to ${testingContract.address} on ${network.name}`)
   })

@@ -1,6 +1,6 @@
 const { networks } = require("../../networks")
 
-task("functions-deploy-testing-ccip-automation", "Deploys the TestingCCIPAutomation contract")
+task("deploy-testing-ccip-automation", "Deploys the TestingCCIPAutomation contract")
   .addOptionalParam("verify", "Set to true to verify contract", false, types.boolean)
   .setAction(async (taskArgs) => {
     console.log(`Deploying TestingCCIPAutomation contract to ${network.name}`)
@@ -12,7 +12,7 @@ task("functions-deploy-testing-ccip-automation", "Deploys the TestingCCIPAutomat
       router: networks.ethereumSepolia.ccipRouter,
       link: networks.ethereumSepolia.linkToken,
       zexCraftNftContract: "0x0429A2Da7884CA14E53142988D5845952fE4DF6a",
-      baseChainAddress: "0xC044FCe37927A0Cb55C7e57425Fe3772181228a6",
+      baseChainAddress: "0x9Fa2f0872498f56Fec437d92D66842f162c6B922",
       mintFee: "10000000",
       ccipToken: "0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05",
       destinationChainSelector: "14767482510784806043",

@@ -1,6 +1,6 @@
 const { networks } = require("../../networks")
 
-task("functions-deploy-implementation", "Deploys the ZexCraftERC6551Account contract")
+task("deploy-implementation", "Deploys the ZexCraftERC6551Account contract")
   .addOptionalParam("verify", "Set to true to verify contract", false, types.boolean)
   .setAction(async (taskArgs) => {
     console.log(`Deploying ZexCraftERC6551Account contract to ${network.name}`)

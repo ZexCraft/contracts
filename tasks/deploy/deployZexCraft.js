@@ -2,7 +2,7 @@ const { types } = require("hardhat/config")
 const { networks } = require("../../networks")
 const fs = require("fs")
 
-task("functions-deploy-zexcraft", "Deploys the ZexCraftNFT contract")
+task("deploy-zexcraft", "Deploys the ZexCraftNFT contract")
   .addOptionalParam("verify", "Set to true to verify contract", false, types.boolean)
   .setAction(async (taskArgs) => {
     console.log(`Deploying ZexCraftNFT contract to ${network.name}`)

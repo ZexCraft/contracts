@@ -9,15 +9,21 @@ task("deploy-crosschain-implementation", "Deploys the ZexCraftERC6551AccountCros
     await run("compile")
 
     const params = {
-      router: networks[network.name],
-      link: "",
-      relRegistry: "",
-      ccipToken: "",
-      sourceChainSelector: "",
+      router: networks[network.name].ccipRouter,
+      link: networks[network.name].linkToken,
+      relRegistry: networks.avalancheFuji.relRegistry,
+      ccipToken: networks[network.name].ccipToken,
+      sourceChainSelector: networks.avalancheFuji.chainSelector,
     }
 
     const crosschainAccountFactory = await ethers.getContractFactory("ZexCraftERC6551AccountCrossChain")
-    const crosschainAccount = await crosschainAccountFactory.deploy()
+    const crosschainAccount = await crosschainAccountFactory.deploy(
+      params.router,
+      params.link,
+      params.relRegistry,
+      params.ccipToken,
+      params.sourceChainSelector
+    )
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
@@ -44,7 +50,13 @@ task("deploy-crosschain-implementation", "Deploys the ZexCraftERC6551AccountCros
         console.log("\nVerifying contract...")
         await run("verify:verify", {
           address: crosschainAccount.address,
-          constructorArguments: [],
+          constructorArguments: [
+            params.router,
+            params.link,
+            params.relRegistry,
+            params.ccipToken,
+            params.sourceChainSelector,
+          ],
         })
         console.log("Contract verified")
       } catch (error) {

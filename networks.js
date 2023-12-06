@@ -46,6 +46,7 @@ const networks = {
     functionsRouter: "0xb83E47C2bC239B3bf370bc41e1459A34b41238D0",
     ccipRouter: "0xD0daae2231E9CB96b94C8512223533293C3693Bf",
     donId: "fun-ethereum-sepolia-1",
+    chainSelector: "16015286601757825753",
     implementation: "0xb1515f97f08046Cf041d978068f66986Ab750FBC",
     accountRegistry: "0xa9bd9d1cd1f29a72a6fa85dcdaec1c1efab5cde9",
     gatewayUrls: [
@@ -67,6 +68,7 @@ const networks = {
     linkPriceFeed: "0x12162c3E810393dEC01362aBf156D7ecf6159528", // LINK/MATIC
     functionsRouter: "0x6E2dc0F9DB014aE19888F539E59285D2Ea04244C",
     ccipRouter: "0x70499c328e1E2a3c41108bd3730F6670a44595D1",
+    chainSelector: "12532609583862916517",
     donId: "fun-polygon-mumbai-1",
     gatewayUrls: [
       "https://01.functions-gateway.testnet.chain.link/",
@@ -86,6 +88,11 @@ const networks = {
     linkWrapper: "0x9345AC54dA4D0B5Cda8CB749d8ef37e5F02BBb21",
     linkPriceFeed: "0x79c91fd4F8b3DaBEe17d286EB11cEE4D83521775", // LINK/AVAX
     functionsRouter: "0xA9d587a00A31A52Ed70D6026794a8FC5E2F5dCb0",
+    relRegistry: "",
+    zexcraftNft: "",
+    mintFee: "",
+    baseChainAddress: "",
+    chainSelector: "14767482510784806043",
     donId: "fun-avalanche-fuji-1",
     ccipRouter: "0x554472a2720e5e7d5d3c817529aba05eed5f82d8",
     gatewayUrls: [
@@ -104,6 +111,7 @@ const networks = {
     nativeCurrencySymbol: "ETH",
     linkToken: "0xdc2CC710e42857672E7907CF474a69B63B93089f",
     linkWrapper: "0xab18414CD93297B0d12ac29E63Ca20f515b3DB46",
+    chainSelector: "2664363617261496610",
     ccipRouter: "0xeb52e9ae4a9fb37172978642d4c141ef53876f26",
   },
   binanceTestnet: {
@@ -116,6 +124,7 @@ const networks = {
     confirmations: DEFAULT_VERIFICATION_BLOCK_CONFIRMATIONS,
     nativeCurrencySymbol: "ETH",
     linkToken: "0x84b9B910527Ad5C03A9Ca831909E21e236EA7b06",
+    chainSelector: "13264668187771770619",
     ccipRouter: "0x9527e2d01a3064ef6b50c1da1c0cc523803bcff2",
   },
   baseGoerliTestnet: {
@@ -127,6 +136,7 @@ const networks = {
     chainId: 11155111,
     confirmations: DEFAULT_VERIFICATION_BLOCK_CONFIRMATIONS,
     nativeCurrencySymbol: "ETH",
+    chainSelector: "5790810961207155433",
     linkToken: "0xd886e2286fd1073df82462ea1822119600af80b6",
     ccipRouter: "0xa8c0c11bf64af62cdca6f93d3769b88bdd7cb93d",
   },

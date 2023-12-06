@@ -90,8 +90,8 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
     string _fetchSourceCode;
     uint32 _callbackGasLimit;
     uint256 _mintFee;
-    // address _crossChainAddress;
-    // IERC6551Registry _registry;
+    address _crossChainAddress;
+    IERC6551Registry _registry;
   }
 
 
@@ -112,8 +112,8 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
     tokenIdCounter = 1;
     linkAddress = params._linkAddress;
     wrapperAddress = params._wrapperAddress;
-    // crossChainAddress = params._crossChainAddress;
-    // accountRegistry = params._registry;
+    crossChainAddress = params._crossChainAddress;
+    accountRegistry = params._registry;
   }
 
   event OracleReturned(bytes32 requestId, bytes response, bytes error);
@@ -156,7 +156,7 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
     IRelationship.NFT memory nft2, 
     uint8 donHostedSecretsSlotID,
     uint64 donHostedSecretsVersion
-  ) external payable returns (uint256 requestId) {
+  ) external payable onlyRelationship returns (uint256 requestId) {
     require(msg.value>=mintFee,"not enough fee");
     return _createBabyZexCraftNft(nft1, nft2,
      donHostedSecretsSlotID,

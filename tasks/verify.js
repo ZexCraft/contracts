@@ -1,4 +1,6 @@
+const { types } = require("hardhat/config")
 const { networks } = require("../networks")
+const fs = require("fs")
 task("verify-contract", "Verifies contract")
   .addParam("contract", "Address of the client contract to verify")
   .setAction(async (taskArgs, hre) => {
@@ -9,20 +11,11 @@ task("verify-contract", "Verifies contract")
     }
     const params = {
       router: networks[network.name].ccipRouter,
-      link: networks[network.name].linkToken,
-      zexcraftNft: networks.avalancheFuji.zexcraftNft,
-      baseChainAddress: networks.avalancheFuji.baseChainAddress,
       mintFee: networks.avalancheFuji.mintFee,
-      ccipToken: networks[network.name].ccipToken,
+      zexcraft: networks[network.name].zexcraftNft,
     }
-    const constructorArguments = [
-      params.router,
-      params.link,
-      params.zexcraftNft,
-      params.baseChainAddress,
-      params.mintFee,
-      params.ccipToken,
-    ]
+
+    const constructorArguments = [params.router, params.mintFee, params.zexcraft]
 
     console.log(`Verifying contract to ${taskArgs.contract}`)
 

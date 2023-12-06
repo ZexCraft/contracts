@@ -9,18 +9,11 @@ task("deploy-relationship-registry", "Deploys the ZexCraftRelationshipRegistry c
     await run("compile")
 
     const params = {
-      router: networks[network.name].accountRegistry,
-      relationship: networks[network.name].relationship,
+      accountRegistry: networks[network.name].accountRegistry,
       ccipRouter: networks[network.name].ccipRouter,
-      relationship: networks[network.name].zexcraftNft,
     }
     const relationshipFactory = await ethers.getContractFactory("ZexCraftRelationshipRegistry")
-    const relationshipRegistry = await relationshipFactory.deploy(
-      params.router,
-      params.relationship,
-      params.ccipRouter,
-      params.relationship
-    )
+    const relationshipRegistry = await relationshipFactory.deploy(params.accountRegistry, params.ccipRouter)
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
@@ -47,7 +40,7 @@ task("deploy-relationship-registry", "Deploys the ZexCraftRelationshipRegistry c
         console.log("\nVerifying contract...")
         await run("verify:verify", {
           address: relationshipRegistry.address,
-          constructorArguments: [params.router, params.relationship, params.ccipRouter, params.relationship],
+          constructorArguments: [params.accountRegistry, params.ccipRouter],
         })
         console.log("Contract verified")
       } catch (error) {

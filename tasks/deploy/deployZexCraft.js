@@ -7,10 +7,10 @@ task("deploy-zexcraft", "Deploys the ZexCraftNFT contract")
   .setAction(async (taskArgs) => {
     console.log(`Deploying ZexCraftNFT contract to ${network.name}`)
 
-    const linkToken = networks[network.name]["linkToken"]
-    const linkWrapper = networks[network.name]["linkWrapper"]
-    const router = networks[network.name]["functionsRouter"]
-    const accountRegistry = networks[network.name]["accountRegistry"]
+    const linkToken = networks.avalancheFuji.linkToken
+    const linkWrapper = networks.avalancheFuji.linkWrapper
+    const router = networks.avalancheFuji.functionsRouter
+    const accountRegistry = networks.avalancheFuji.accountRegistry
     const donId = networks.avalancheFuji.donIdHash
     const relRegistry = networks.avalancheFuji.relRegistry
     const generateSourceCode = fs.readFileSync("./generate-zexcraft-nft.js").toString()
@@ -19,6 +19,19 @@ task("deploy-zexcraft", "Deploys the ZexCraftNFT contract")
     const mintFee = networks.avalancheFuji.mintFee
     const baseChainAddress = networks.avalancheFuji.baseChainAddress
 
+    console.log([
+      linkToken,
+      linkWrapper,
+      router,
+      accountRegistry,
+      donId,
+      relRegistry,
+      generateSourceCode.length != 0,
+      fetchSourceCode.length != 0,
+      callbackGasLimit,
+      mintFee,
+      baseChainAddress,
+    ])
     console.log("\n__Compiling Contracts__")
     await run("compile")
 

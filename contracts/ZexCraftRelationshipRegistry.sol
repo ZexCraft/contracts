@@ -19,7 +19,6 @@ contract ZexCraftRelationshipRegistry is CCIPReceiver, ConfirmedOwner{
     address public relationshipImplementation;
     address public immutable i_ccipRouter;
   address public crossChainAddress;
-  address public zexCraftAddress;
   bytes32 public s_lastReceivedMessageId ;
   bytes public  s_lastReceivedData ;
 
@@ -28,12 +27,15 @@ contract ZexCraftRelationshipRegistry is CCIPReceiver, ConfirmedOwner{
 
   mapping(uint64 => mapping(address => bool)) public allowlistedAddresses;
 
-    constructor(IERC6551Registry _accountRegistry,address _relationshipImplementation,address _ccipRouter,address _zexCraftAddress) CCIPReceiver(_ccipRouter) ConfirmedOwner(msg.sender)
+    constructor(IERC6551Registry _accountRegistry,address _ccipRouter) CCIPReceiver(_ccipRouter) ConfirmedOwner(msg.sender)
     {
         accountRegistry = _accountRegistry;
-        relationshipImplementation=_relationshipImplementation;
         i_ccipRouter=_ccipRouter; 
-        zexCraftAddress=_zexCraftAddress;
+    }
+
+
+    function setRelationshipImplementation(address _relationshipImplementation) public onlyOwner{
+        relationshipImplementation=_relationshipImplementation;
     }
 
     
@@ -92,11 +94,12 @@ contract ZexCraftRelationshipRegistry is CCIPReceiver, ConfirmedOwner{
 
     function _createRelationship(IRelationship.NFT memory nft1,IRelationship.NFT memory nft2,bytes memory otherAccountsignature) internal returns(address)
     {   
+        require(relationshipImplementation!=address(0),"relationshipImplementation not set");
         // TODO: Verify otherAccountsignature with owner of the other NFT using owner() function of ERC6551
         address relationship = _deployProxy(relationshipImplementation, 1);
         require(relationshipExists[relationship] == false, "Relationship already exists");
         
-        IRelationship(relationship).initialize(nft1, nft2,zexCraftAddress);
+        IRelationship(relationship).initialize(nft1, nft2);
         relationshipExists[relationship] = true;
         
         emit RelationshipCreated(msg.sender, nft1.contractAddress, relationship);

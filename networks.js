@@ -47,6 +47,7 @@ const networks = {
     ccipRouter: "0xD0daae2231E9CB96b94C8512223533293C3693Bf",
     donId: "fun-ethereum-sepolia-1",
     chainSelector: "16015286601757825753",
+    ccipToken: "0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05",
     implementation: "",
     gatewayUrls: [
       "https://01.functions-gateway.testnet.chain.link/",
@@ -67,9 +68,10 @@ const networks = {
     linkPriceFeed: "0x12162c3E810393dEC01362aBf156D7ecf6159528", // LINK/MATIC
     functionsRouter: "0x6E2dc0F9DB014aE19888F539E59285D2Ea04244C",
     ccipRouter: "0x70499c328e1E2a3c41108bd3730F6670a44595D1",
-    implementation: "",
+    implementation: "0xDc59057716677afE37755e8aA256c8d852D62f64",
     chainSelector: "12532609583862916517",
     donId: "fun-polygon-mumbai-1",
+    ccipToken: "0xf1E3A5842EeEF51F2967b3F05D45DD4f4205FF40",
     gatewayUrls: [
       "https://01.functions-gateway.testnet.chain.link/",
       "https://02.functions-gateway.testnet.chain.link/",
@@ -88,13 +90,13 @@ const networks = {
     linkWrapper: "0x9345AC54dA4D0B5Cda8CB749d8ef37e5F02BBb21",
     linkPriceFeed: "0x79c91fd4F8b3DaBEe17d286EB11cEE4D83521775", // LINK/AVAX
     functionsRouter: "0xA9d587a00A31A52Ed70D6026794a8FC5E2F5dCb0",
-    relRegistry: "",
-    zexcraftNft: "",
-    mintFee: "",
-    accountRegistry: "",
-    relationship: "",
-    baseChainAddress: "",
-    implementation: "",
+    relRegistry: "0xBbc7268f991b6325Ab733f7250da42243900C71a",
+    zexcraftNft: "0xDe2E718C8A658Ac1c9ED28F2756642F683104C9e",
+    mintFee: "1234567890",
+    accountRegistry: "0x8DecD86959b87c64Be4978029a27D19c3e5d49DE",
+    relationship: "0x46eb9d9F7C1fA5f7f7D8ad92e14eEEF7a83e47d0",
+    baseChainAddress: "0xB32e77dc18A4a6afDccBD58517f869A905E58Ca8",
+    implementation: "0x70e6A6B036cf5b8759E8E7105168568086d05430",
     donIdHash: "0x66756e2d657468657265756d2d7365706f6c69612d3100000000000000000000",
     chainSelector: "14767482510784806043",
     donId: "fun-avalanche-fuji-1",
@@ -117,6 +119,7 @@ const networks = {
     linkWrapper: "0xab18414CD93297B0d12ac29E63Ca20f515b3DB46",
     implementation: "",
     chainSelector: "2664363617261496610",
+    ccipToken: "0xaBfE9D11A2f1D61990D1d253EC98B5Da00304F16",
     ccipRouter: "0xeb52e9ae4a9fb37172978642d4c141ef53876f26",
   },
   binanceTestnet: {
@@ -131,6 +134,7 @@ const networks = {
     linkToken: "0x84b9B910527Ad5C03A9Ca831909E21e236EA7b06",
     implementation: "",
     chainSelector: "13264668187771770619",
+    ccipToken: "0xbfa2acd33ed6eec0ed3cc06bf1ac38d22b36b9e9",
     ccipRouter: "0x9527e2d01a3064ef6b50c1da1c0cc523803bcff2",
   },
   baseGoerliTestnet: {
@@ -145,6 +149,7 @@ const networks = {
     chainSelector: "5790810961207155433",
     implementation: "",
     linkToken: "0xd886e2286fd1073df82462ea1822119600af80b6",
+    ccipToken: "0xbf9036529123de264bfa0fc7362fe25b650d4b16",
     ccipRouter: "0xa8c0c11bf64af62cdca6f93d3769b88bdd7cb93d",
   },
   // localFunctionsTestnet is updated dynamically by scripts/startLocalFunctionsTestnet.js so it should not be modified here

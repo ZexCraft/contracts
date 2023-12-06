@@ -24,10 +24,11 @@ contract ZexCraftRelationship is CCIPReceiver, ConfirmedOwner{
   mapping(uint64=>mapping(address=>bool)) public allowlistedAddresses;
 
 
-  constructor(address _router, uint mintFee) CCIPReceiver(_router) ConfirmedOwner(msg.sender)
+  constructor(address _router, uint mintFee,address _zexCraftAddress) CCIPReceiver(_router) ConfirmedOwner(msg.sender)
   {
     router=_router;
     crosschainMintFee=mintFee;
+    zexCraftAddress=_zexCraftAddress;
   } 
 
   event MessageReceived(bytes32 messageId, bytes data);
@@ -46,11 +47,10 @@ contract ZexCraftRelationship is CCIPReceiver, ConfirmedOwner{
   }
 
 
-    function intialize(IRelationship.NFT memory nft1,IRelationship.NFT memory nft2,address _zexCraftAddress) external onlyOnce
+    function intialize(IRelationship.NFT memory nft1,IRelationship.NFT memory nft2) external onlyOnce
     {
        nfts[0]=nft1;
        nfts[1]=nft2;
-       zexCraftAddress=_zexCraftAddress;
        allowlistedAddresses[nft1.sourceChainSelector][nft1.contractAddress]=true;
        allowlistedAddresses[nft2.sourceChainSelector][nft2.contractAddress]=true;
     }

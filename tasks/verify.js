@@ -7,8 +7,22 @@ task("verify-contract", "Verifies contract")
         'This command cannot be used on a local development chain.  Specify a valid network or simulate an Functions request locally with "npx hardhat functions-simulate".'
       )
     }
-
-    const constructorArguments = []
+    const params = {
+      router: networks[network.name].ccipRouter,
+      link: networks[network.name].linkToken,
+      zexcraftNft: networks.avalancheFuji.zexcraftNft,
+      baseChainAddress: networks.avalancheFuji.baseChainAddress,
+      mintFee: networks.avalancheFuji.mintFee,
+      ccipToken: networks[network.name].ccipToken,
+    }
+    const constructorArguments = [
+      params.router,
+      params.link,
+      params.zexcraftNft,
+      params.baseChainAddress,
+      params.mintFee,
+      params.ccipToken,
+    ]
 
     console.log(`Verifying contract to ${taskArgs.contract}`)
 

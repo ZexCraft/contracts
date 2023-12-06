@@ -16,7 +16,7 @@ task("deploy-crosschain-mint", "Deploys the ZexCraftCrosschainMint contract")
       mintFee: networks.avalancheFuji.mintFee,
       ccipToken: networks[network.name].ccipToken,
     }
-
+    console.log(params)
     const crosschainMintFactory = await ethers.getContractFactory("ZexCraftCrosschainMint")
     const crosschainMint = await crosschainMintFactory.deploy(
       params.router,

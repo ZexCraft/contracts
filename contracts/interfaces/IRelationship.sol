@@ -13,7 +13,7 @@ interface IRelationship{
     uint64 sourceChainSelector;
   }
 
-    function initialize(NFT memory nft1, NFT memory nft2,address zexCraftAddress) external;
+    function initialize(NFT memory nft1, NFT memory nft2) external;
 
     function isValidSigner(address signer) external view returns(bool);
 

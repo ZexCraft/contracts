@@ -11,10 +11,11 @@ task("deploy-relationship", "Deploys the ZexCraftRelationship contract")
     const params = {
       router: networks[network.name].ccipRouter,
       mintFee: networks.avalancheFuji.mintFee,
+      zexcraft: networks[network.name].zexcraftNft,
     }
 
     const relationshipFactory = await ethers.getContractFactory("ZexCraftRelationship")
-    const relationship = await relationshipFactory.deploy(params.router, params.mintFee)
+    const relationship = await relationshipFactory.deploy(params.router, params.mintFee, params.zexcraft)
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
@@ -41,7 +42,7 @@ task("deploy-relationship", "Deploys the ZexCraftRelationship contract")
         console.log("\nVerifying contract...")
         await run("verify:verify", {
           address: relationship.address,
-          constructorArguments: [params.router, params.mintFee],
+          constructorArguments: [params.router, params.mintFee, params.zexcraft],
         })
         console.log("Contract verified")
       } catch (error) {

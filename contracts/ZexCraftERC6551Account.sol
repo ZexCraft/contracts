@@ -46,9 +46,9 @@ contract ZexCraftERC6551Account is IERC165, IERC1271, IERC6551Account, IERC6551E
     return abi.encodeWithSignature("createRelationship(address,bytes[2])",otherAccount,signatures);
   }
 
-  function createRelationship(address relationshipRegistry,address otherAccount,bytes[2] memory signatures) external returns (address) {
+  function createRelationship(address _relationshipRegistry,address otherAccount,bytes[2] memory signatures) external returns (address) {
     require(_isValidSigner(msg.sender), "Invalid signer");
-    return abi.decode(_execute(relationshipRegistry, 0, getCreateRelationshipData(otherAccount,signatures), 0), (address));
+    return abi.decode(_execute(_relationshipRegistry, 0, getCreateRelationshipData(otherAccount,signatures), 0), (address));
   }
 
   function execute(

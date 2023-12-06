@@ -21,4 +21,6 @@ interface IZexCraftNFT{
         string memory prompt
     ) external returns (uint256);
 
+
+  function deployBabyZexCraftNftAccount(uint256 _requestId) external returns (address);
 }

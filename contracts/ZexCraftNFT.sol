@@ -14,6 +14,7 @@ import "./interfaces/IRelationshipRegistry.sol";
 import "./interfaces/IERC6551Registry.sol";
 import "./interfaces/IRelationship.sol";
 import "./interfaces/ILogAutomation.sol";
+import "./interfaces/IERC721URIStorage.sol";
 
 contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, FunctionsClient, ConfirmedOwner , ILogAutomation{
   using Strings for uint256;
@@ -27,7 +28,6 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
     MINTED
   }
 
- 
 
   struct ZexCraftNftRequest {
     IRelationship.NFT nft1;
@@ -119,8 +119,8 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
   event OracleReturned(bytes32 requestId, bytes response, bytes error);
   event RequestSent(uint256 requestId, uint32 numWords);
   event RequestFulfilled(uint256 requestId, uint256[] randomWords, uint256 payment);
-  event ZexCraftNFTCreated(uint256 tokenId, string tokenUri, address owner);
-  event ZexCraftAccountDeployed(address tokenAddress, uint256 tokenId, address account);
+  event ZexCraftNFTCreated(uint256 tokenId, string tokenUri, address owner, bool nftType);
+  event ZexCraftAccountDeployed(address tokenAddress, uint256 tokenId, address account,address owner, string tokenUri);
   event ZexCraftNftRequested(uint256 requestId);
     
   modifier onlyRelationship() {
@@ -334,7 +334,7 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
         _safeMint(zexCraftNftRequests[_requestId].owner, _tokenIdCounter);
         _setTokenURI(_tokenIdCounter, tokenUri);
         zexCraftNftRequests[_requestId].status = Status.MINTED;
-        emit ZexCraftNFTCreated(_tokenIdCounter, tokenUri, zexCraftNftRequests[_requestId].owner);
+        emit ZexCraftNFTCreated(_tokenIdCounter, tokenUri, zexCraftNftRequests[_requestId].owner,zexCraftNftRequests[_requestId].args.length!=4);
       }
     }else{
       emit OracleReturned(requestId, response, err);
@@ -348,9 +348,10 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
     _deployAccount(address(this),_tokenId);
   }
 
+
   function deployOtherNFTAccount(address tokenAddress, uint256 _tokenId) external payable {
     require(msg.value>=mintFee,"not enough fee");
-    require(IERC721(tokenAddress).ownerOf(_tokenId) == msg.sender, "not owner");
+    require(IERC721URIStorage(tokenAddress).ownerOf(_tokenId) == msg.sender, "not owner");
     _deployAccount(tokenAddress,_tokenId);
   }
 
@@ -359,6 +360,15 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
     require(link.transfer(msg.sender, link.balanceOf(address(this))), "Unable to transfer");
   }
 
+  function deployBabyZexCraftNftAccount(uint256 _requestId) external onlyRelationship returns (address){
+    require(zexCraftNftRequests[_requestId].status == Status.MINTED, "not minted");
+    require(zexCraftNftRequests[_requestId].account == address(0), "already deployed");
+    _deployAccount(address(this),zexCraftNftRequests[_requestId].tokenId);
+    return zexCraftNftRequests[_requestId].account;
+
+  }
+
+
   
   function _deployAccount(address tokenAddress, uint256 _tokenId) internal{
     address account=accountRegistry.account(address(0), block.chainid, tokenAddress, _tokenId, 0);
@@ -366,7 +376,9 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage, VRFV2WrapperConsumerBase, Func
     account = accountRegistry.createAccount{value: 0}(address(0), block.chainid, tokenAddress, _tokenId, 0, "0x");
     zexCraftNftRequests[tokenIdToZexCraftNftRequest[_tokenId]].account = account;
     accounts[account]=true;
-    emit ZexCraftAccountDeployed(tokenAddress,_tokenId,account);
+    string memory tokenUri = IERC721URIStorage(tokenAddress).tokenURI(_tokenId);
+    address owner=IERC721URIStorage(tokenAddress).ownerOf(_tokenId);
+    emit ZexCraftAccountDeployed(tokenAddress,_tokenId,account,owner, tokenUri);
   }
 
   /**

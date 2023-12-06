@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/utils/Create2.sol";
 import "./interfaces/IERC6551Registry.sol";
 import "./interfaces/IRelationship.sol";
 import "./interfaces/IERC6551Account.sol";
-import "./interfaces/IERC721.sol";
+import "./interfaces/IERC721URIStorage.sol";
 
 contract ZexCraftRelationshipRegistry is CCIPReceiver, ConfirmedOwner{
     mapping(address => bool) public relationshipExists;
@@ -21,6 +21,8 @@ contract ZexCraftRelationshipRegistry is CCIPReceiver, ConfirmedOwner{
   address public crossChainAddress;
   bytes32 public s_lastReceivedMessageId ;
   bytes public  s_lastReceivedData ;
+
+  mapping(address=>mapping(address=>bool)) public pairs;
 
   uint64 public constant chainSelector=14767482510784806043;
 
@@ -34,14 +36,12 @@ contract ZexCraftRelationshipRegistry is CCIPReceiver, ConfirmedOwner{
     }
 
 
-    function setRelationshipImplementation(address _relationshipImplementation) public onlyOwner{
-        relationshipImplementation=_relationshipImplementation;
-    }
 
     
 
-    event RelationshipCreated(address indexed account1, address indexed account2, address indexed relationship);
-    event OperationFailed();
+    event RelationshipCreated(IRelationship.NFT nft1, IRelationship.NFT nft2, address relationship);
+
+
     modifier onlyZexCraftERC6551Account(address otherAccount) {
         require(accountRegistry.isAccount(msg.sender), "TxSender not account");
         require(accountRegistry.isAccount(otherAccount), "Pair not account");
@@ -54,6 +54,10 @@ contract ZexCraftRelationshipRegistry is CCIPReceiver, ConfirmedOwner{
     _;
   }
 
+    function setRelationshipImplementation(address _relationshipImplementation) public onlyOwner{
+        relationshipImplementation=_relationshipImplementation;
+    }
+    
     function addZexCraftCrossChain(uint64[] memory sourceChainSelector,address[] memory sender) external onlyOwner {
     require(sourceChainSelector.length==sender.length,"invalid length");
     for(uint i=0;i<sourceChainSelector.length;i++)
@@ -81,7 +85,7 @@ contract ZexCraftRelationshipRegistry is CCIPReceiver, ConfirmedOwner{
         address relationship=_createRelationship(nft1, nft2,partnerSig);
         s_lastReceivedMessageId = any2EvmMessage.messageId;
         s_lastReceivedData = any2EvmMessage.data;
-        emit RelationshipCreated(nft1.contractAddress, nft2.contractAddress, relationship);
+        emit RelationshipCreated(nft1, nft2, relationship);
     }
 
 
@@ -93,7 +97,8 @@ contract ZexCraftRelationshipRegistry is CCIPReceiver, ConfirmedOwner{
     }
 
     function _createRelationship(IRelationship.NFT memory nft1,IRelationship.NFT memory nft2,bytes memory otherAccountsignature) internal returns(address)
-    {   
+    {      
+        require(pairs[nft1.contractAddress][nft2.contractAddress]==false,"pair already exists");
         require(relationshipImplementation!=address(0),"relationshipImplementation not set");
         // TODO: Verify otherAccountsignature with owner of the other NFT using owner() function of ERC6551
         address relationship = _deployProxy(relationshipImplementation, 1);
@@ -101,8 +106,9 @@ contract ZexCraftRelationshipRegistry is CCIPReceiver, ConfirmedOwner{
         
         IRelationship(relationship).initialize(nft1, nft2);
         relationshipExists[relationship] = true;
-        
-        emit RelationshipCreated(msg.sender, nft1.contractAddress, relationship);
+        pairs[nft1.contractAddress][nft2.contractAddress]=true;
+        pairs[nft2.contractAddress][nft1.contractAddress]=true;
+        emit RelationshipCreated(nft1, nft2, relationship);
 
         return relationship;
     }
@@ -136,8 +142,8 @@ contract ZexCraftRelationshipRegistry is CCIPReceiver, ConfirmedOwner{
 
     function _getNft(address account) internal view returns (IRelationship.NFT memory) {
         (uint256 chainId, address nftAddress, uint256 tokenId)=IERC6551Account(payable(account)).token();
-        address owner=IERC721(nftAddress).ownerOf(tokenId);
-        string memory tokenUri=IERC721(nftAddress).tokenURI(tokenId);
+        address owner=IERC721URIStorage(nftAddress).ownerOf(tokenId);
+        string memory tokenUri=IERC721URIStorage(nftAddress).tokenURI(tokenId);
         return IRelationship.NFT(tokenId,tokenUri,owner,nftAddress,chainId,chainSelector);
     }
 

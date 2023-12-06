@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import "../interfaces/IERC6551Account.sol";
 import "../interfaces/IRelationship.sol";
 import "../interfaces/IERC6551Registry.sol";
-import "../interfaces/IERC721.sol";
+import "../interfaces/IERC721URIStorage.sol";
 
 interface IERC6551Executable {
   function execute(
@@ -253,7 +253,7 @@ contract ZexCraftERC6551AccountCrossChain is IERC165, IERC1271, IERC6551Account,
     (uint256 chainId, address tokenContract, uint256 tokenId) = token();
     if (chainId != block.chainid) return address(0);
 
-    return IERC721(tokenContract).ownerOf(tokenId);
+    return IERC721URIStorage(tokenContract).ownerOf(tokenId);
   }
 
   function _isValidSigner(address signer) internal view virtual returns (bool) {
@@ -264,8 +264,8 @@ contract ZexCraftERC6551AccountCrossChain is IERC165, IERC1271, IERC6551Account,
         if(accountRegistry!=IERC6551Registry(address(0)))
         require(accountRegistry.isAccount(account), "Invalid account");
         (uint256 chainId, address nftAddress, uint256 tokenId)=IERC6551Account(payable(account)).token();
-        address _owner=IERC721(nftAddress).ownerOf(tokenId);
-        string memory tokenUri=IERC721(nftAddress).tokenURI(tokenId);
+        address _owner=IERC721URIStorage(nftAddress).ownerOf(tokenId);
+        string memory tokenUri=IERC721URIStorage(nftAddress).tokenURI(tokenId);
         return IRelationship.NFT(tokenId,tokenUri,_owner,nftAddress,chainId,sourceChainSelector );
     }
 

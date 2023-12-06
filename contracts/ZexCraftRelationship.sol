@@ -22,7 +22,7 @@ contract ZexCraftRelationship is CCIPReceiver, ConfirmedOwner{
     address public router;
     uint256 public crosschainMintFee;
   mapping(uint64=>mapping(address=>bool)) public allowlistedAddresses;
-
+  mapping(uint256=>uint8) public babyRequests;
 
   constructor(address _router, uint mintFee,address _zexCraftAddress) CCIPReceiver(_router) ConfirmedOwner(msg.sender)
   {
@@ -88,11 +88,21 @@ contract ZexCraftRelationship is CCIPReceiver, ConfirmedOwner{
   }
 
 
-  function createBaby(bytes memory parterSig) external payable 
+  function createBaby(bytes memory parterSig) external payable  returns(uint256)
   {
     // TODO: Verify partner signature
     require(_isValidSigner(msg.sender),"Invalid signer");
-    IZexCraftNFT(zexCraftAddress).createBabyZexCraftNft{value:msg.value}(nfts[0],nfts[1]);
+    uint256 requestId=IZexCraftNFT(zexCraftAddress).createBabyZexCraftNft{value:msg.value}(nfts[0],nfts[1]);
+    babyRequests[requestId]=1;
+    return requestId;
+  }
+
+  function createBabyAccount(uint256 requestId) public returns(address) {
+    require(_isValidSigner(msg.sender),"Invalid signer");
+    require(babyRequests[requestId]==1,"invalid requestId");
+    babyRequests[requestId]=2;
+
+    return IZexCraftNFT(zexCraftAddress).deployBabyZexCraftNftAccount(requestId);
   }
 
 

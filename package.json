@@ -18,6 +18,7 @@
     "format:fix": "prettier --write ."
   },
   "dependencies": {
+    "@chainlink/env-enc": "^1.0.5",
     "@ethersproject/abi": "^5.7.0",
     "@ethersproject/providers": "^5.7.1",
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.3",

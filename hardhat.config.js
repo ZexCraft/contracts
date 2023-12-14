@@ -45,12 +45,7 @@ module.exports = {
   },
   etherscan: {
     apiKey: {
-      sepolia: networks.ethereumSepolia.verifyApiKey,
       polygonMumbai: networks.polygonMumbai.verifyApiKey,
-      avalancheFujiTestnet: networks.avalancheFuji.verifyApiKey,
-      bscTestnet: networks.binanceTestnet.verifyApiKey,
-      optimisticGoerli: networks.baseGoerliTestnet.verifyApiKey,
-      baseGoerli: networks.baseGoerliTestnet.verifyApiKey,
     },
     customChains: [
       {

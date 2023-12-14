@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.7;
+pragma solidity ^0.8.19;
 
-interface ICrafToken {
+interface ICraftToken {
   function burnTokens(address creator, uint256 amount) external returns (bool);
 }

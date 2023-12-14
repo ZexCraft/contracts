@@ -3,26 +3,32 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "@openzeppelin/contract/access/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./interfaces/IRelationshipRegistry.sol";
 import "./interfaces/IERC6551Registry.sol";
 import "./interfaces/IRelationship.sol";
 import "./interfaces/IERC721URIStorage.sol";
+import "./interfaces/ICraftToken.sol";
 
 contract PegoCraft is ERC721, ERC721URIStorage, Ownable {
   using Strings for uint256;
 
   bool public isInitialized;
   uint256 public tokenIdCounter;
-  IRelationshipRegistry public relRegisty;
+  IRelationshipRegistry public relRegistry;
   uint256 public mintFee;
   address public craftToken;
   IERC6551Registry public accountRegistry;
   mapping(address => bool) public accounts;
 
-  constructor(address _relRegisty, uint256 _mintFee, address _craftToken) ERC721("PegoCraft", "PCT") {
-    relRegisty = _relRegisty;
+  constructor(
+    address _relRegistry,
+    uint256 _mintFee,
+    address _craftToken
+  ) ERC721("PegoCraft", "PCT") Ownable(msg.sender) {
+    relRegistry = IRelationshipRegistry(_relRegistry);
     mintFee = _mintFee;
     tokenIdCounter = 0;
     craftToken = _craftToken;
@@ -33,7 +39,7 @@ contract PegoCraft is ERC721, ERC721URIStorage, Ownable {
   event PegoCraftNFTBred(uint256 tokenId, string tokenUri, address owner, NFT parent1, NFT parent2, bool nftType);
 
   modifier onlyRelationship() {
-    require(relRegisty.isRelationship(msg.sender), "only relationship");
+    require(relRegistry.isRelationship(msg.sender), "only relationship");
     _;
   }
 
@@ -83,11 +89,7 @@ contract PegoCraft is ERC721, ERC721URIStorage, Ownable {
     return super.tokenURI(tokenId);
   }
 
-  function supportsInterface(bytes4 interfaceId) public view override(ERC721) returns (bool) {
+  function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721URIStorage) returns (bool) {
     return super.supportsInterface(interfaceId);
-  }
-
-  function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
-    super._burn(tokenId);
   }
 }

@@ -16,7 +16,7 @@ contract ZexCraftRelationshipRegistry is Ownable {
 
   mapping(address => mapping(address => bool)) public pairs;
 
-  constructor(IERC6551Registry _accountRegistry) {
+  constructor(IERC6551Registry _accountRegistry) Ownable(msg.sender) {
     accountRegistry = _accountRegistry;
   }
 

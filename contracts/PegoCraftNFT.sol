@@ -13,12 +13,6 @@ import "./interfaces/IERC721URIStorage.sol";
 contract PegoCraft is ERC721, ERC721URIStorage, Ownable {
   using Strings for uint256;
 
-  struct NFT {
-    address tokenAddres;
-    address tokenId;
-    uint256 chainId;
-  }
-
   bool public isInitialized;
   uint256 public tokenIdCounter;
   IRelationshipRegistry public relRegisty;
@@ -53,32 +47,36 @@ contract PegoCraft is ERC721, ERC721URIStorage, Ownable {
     craftToken = _craftTokenAddress;
   }
 
-  function createNewZexCraftNft(
+  function createNft(
     string memory tokenURI,
     address creator,
     bytes memory signature
   ) external onlyOwner returns (uint256 requestId) {
-    require(IERC20(craftToken).balanceOf(creator) >= mintFee, "not enough fee");
-    // Burn the tokens
+    // Check Signature
+    require(IERC20(craftToken).allowance(creator, address(this)) >= mintFee, "not enough fee");
+    require(ICraftToken(craftToken).burnTokens(creator, mintFee), "burn failed");
     _mint(creator, tokenIdCounter);
     _setTokenURI(tokenIdCounter, tokenURI);
     tokenIdCounter++;
     emit PegoCraftNFTCreated(tokenIdCounter, tokenURI, creator, false);
   }
 
-  function createBabyZexCraftNft(
+  function createBaby(
     NFT memory nft1,
     NFT memory nft2,
     string memory tokenURI,
-    address relationship,
-    bytes memory signature
+    bytes memory createBabyData,
+    bytes memory signatures
   ) external onlyOwner returns (uint256 requestId) {
-    require(IERC20(craftToken).balanceOf(relationship) >= mintFee, "not enough fee");
-    // Burn the tokens
-    _mint(creator, tokenIdCounter);
+    // check singatures
+
+    // Change msg.sender after decoding the data
+    require(IERC20(craftToken).balanceOf(msg.sender) >= mintFee, "not enough fee");
+    require(ICraftToken(craftToken).burnTokens(msg.sender, mintFee), "burn failed");
+    _mint(msg.sender, tokenIdCounter);
     _setTokenURI(tokenIdCounter, tokenURI);
     tokenIdCounter++;
-    emit PegoCraftNFTBred(tokenIdCounter, tokenURI, relationship, nft1, nft2, true);
+    emit PegoCraftNFTBred(tokenIdCounter, tokenURI, msg.sender, nft1, nft2, true);
   }
 
   function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
@@ -91,9 +89,5 @@ contract PegoCraft is ERC721, ERC721URIStorage, Ownable {
 
   function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
     super._burn(tokenId);
-  }
-
-  function getStatus(uint requestId) public view returns (Status) {
-    return zexCraftNftRequests[requestId].status;
   }
 }

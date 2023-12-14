@@ -1,41 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
-import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
-import {ConfirmedOwner} from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
-
 import "@openzeppelin/contracts/utils/Create2.sol";
 import "./interfaces/IERC6551Registry.sol";
 import "./interfaces/IRelationship.sol";
 import "./interfaces/IERC6551Account.sol";
 import "./interfaces/IERC721URIStorage.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract ZexCraftRelationshipRegistry is CCIPReceiver, ConfirmedOwner {
+contract ZexCraftRelationshipRegistry is Ownable {
   mapping(address => bool) public relationshipExists;
 
   IERC6551Registry public accountRegistry;
   address public relationshipImplementation;
-  address public immutable i_ccipRouter;
-  address public crossChainAddress;
-  bytes32 public s_lastReceivedMessageId;
-  bytes public s_lastReceivedData;
 
   mapping(address => mapping(address => bool)) public pairs;
 
-  uint64 public constant chainSelector = 14767482510784806043;
-
-  mapping(uint64 => mapping(address => bool)) public allowlistedAddresses;
-
-  constructor(
-    IERC6551Registry _accountRegistry,
-    address _ccipRouter
-  ) CCIPReceiver(_ccipRouter) ConfirmedOwner(msg.sender) {
+  constructor(IERC6551Registry _accountRegistry) {
     accountRegistry = _accountRegistry;
-    i_ccipRouter = _ccipRouter;
   }
 
-  event RelationshipCreated(IRelationship.NFT nft1, IRelationship.NFT nft2, address relationship);
+  event RelationshipCreated(NFT nft1, NFT nft2, address relationship);
 
   modifier onlyZexCraftERC6551Account(address otherAccount) {
     require(accountRegistry.isAccount(msg.sender), "TxSender not account");
@@ -43,57 +28,25 @@ contract ZexCraftRelationshipRegistry is CCIPReceiver, ConfirmedOwner {
     _;
   }
 
-  modifier onlyAllowlisted(uint64 sourceChainSelector, address sender) {
-    require(allowlistedAddresses[sourceChainSelector][sender] == true, "not allowlisted");
-    _;
-  }
-
   function setRelationshipImplementation(address _relationshipImplementation) public onlyOwner {
     relationshipImplementation = _relationshipImplementation;
-  }
-
-  function addZexCraftCrossChain(uint64[] memory sourceChainSelector, address[] memory sender) external onlyOwner {
-    require(sourceChainSelector.length == sender.length, "invalid length");
-    for (uint i = 0; i < sourceChainSelector.length; i++) {
-      allowlistedAddresses[sourceChainSelector[i]][sender[i]] = true;
-    }
-  }
-
-  function _ccipReceive(
-    Client.Any2EVMMessage memory any2EvmMessage
-  )
-    internal
-    override
-    onlyAllowlisted(any2EvmMessage.sourceChainSelector, abi.decode(any2EvmMessage.sender, (address)))
-  {
-    (IRelationship.NFT memory nft1, IRelationship.NFT memory nft2, bytes memory partnerSig) = abi.decode(
-      any2EvmMessage.data,
-      (IRelationship.NFT, IRelationship.NFT, bytes)
-    );
-    if (nft1.chainId == block.chainid) {
-      nft1 = _getNft(nft1.contractAddress);
-    }
-    address relationship = _createRelationship(nft1, nft2, partnerSig);
-    s_lastReceivedMessageId = any2EvmMessage.messageId;
-    s_lastReceivedData = any2EvmMessage.data;
-    emit RelationshipCreated(nft1, nft2, relationship);
   }
 
   function createRelationship(
     address otherAccount,
     bytes memory otherAccountsignature
   ) external onlyZexCraftERC6551Account(otherAccount) returns (address) {
-    IRelationship.NFT memory nft1 = _getNft(msg.sender);
-    IRelationship.NFT memory nft2 = _getNft(otherAccount);
+    NFT memory nft1 = _getNft(msg.sender);
+    NFT memory nft2 = _getNft(otherAccount);
     return _createRelationship(nft1, nft2, otherAccountsignature);
   }
 
   function _createRelationship(
-    IRelationship.NFT memory nft1,
-    IRelationship.NFT memory nft2,
+    NFT memory nft1,
+    NFT memory nft2,
     bytes memory otherAccountsignature
   ) internal returns (address) {
-    require(pairs[nft1.contractAddress][nft2.contractAddress] == false, "pair already exists");
+    require(pairs[nft1.tokenAddress][nft2.tokenAddress] == false, "pair already exists");
     require(relationshipImplementation != address(0), "relationshipImplementation not set");
     // TODO: Verify otherAccountsignature with owner of the other NFT using owner() function of ERC6551
     address relationship = _deployProxy(relationshipImplementation, 1);
@@ -101,8 +54,8 @@ contract ZexCraftRelationshipRegistry is CCIPReceiver, ConfirmedOwner {
 
     IRelationship(relationship).initialize(nft1, nft2);
     relationshipExists[relationship] = true;
-    pairs[nft1.contractAddress][nft2.contractAddress] = true;
-    pairs[nft2.contractAddress][nft1.contractAddress] = true;
+    pairs[nft1.tokenAddress][nft2.tokenAddress] = true;
+    pairs[nft2.tokenAddress][nft1.tokenAddress] = true;
     emit RelationshipCreated(nft1, nft2, relationship);
 
     return relationship;
@@ -126,18 +79,12 @@ contract ZexCraftRelationshipRegistry is CCIPReceiver, ConfirmedOwner {
       );
   }
 
-  function _getNft(address account) internal view returns (IRelationship.NFT memory) {
+  function _getNft(address account) internal view returns (NFT memory) {
     (uint256 chainId, address nftAddress, uint256 tokenId) = IERC6551Account(payable(account)).token();
-    address owner = IERC721URIStorage(nftAddress).ownerOf(tokenId);
-    string memory tokenUri = IERC721URIStorage(nftAddress).tokenURI(tokenId);
-    return IRelationship.NFT(tokenId, tokenUri, owner, nftAddress, chainId, chainSelector);
+    return NFT(nftAddress, tokenId, chainId);
   }
 
   function isRelationship(address _address) external view returns (bool) {
     return relationshipExists[_address];
-  }
-
-  function supportsInterface(bytes4 interfaceId) public pure override(CCIPReceiver) returns (bool) {
-    return super.supportsInterface(interfaceId);
   }
 }

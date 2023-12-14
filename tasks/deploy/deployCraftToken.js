@@ -1,19 +1,15 @@
 const { networks } = require("../../networks")
 
-task("deploy-registry", "Deploys the PegoCraftERC6551Registry contract")
+task("deploy-craft-token", "Deploys the CraftToken contract")
   .addOptionalParam("verify", "Set to true to verify contract", false, types.boolean)
   .setAction(async (taskArgs) => {
-    console.log(`Deploying PegoCraftERC6551Registry contract to ${network.name}`)
+    console.log(`Deploying CraftToken contract to ${network.name}`)
 
     console.log("\n__Compiling Contracts__")
     await run("compile")
-
-    const params = {
-      implementation: networks[network.name].implementation,
-    }
-
-    const zexCraftContractFactory = await ethers.getContractFactory("PegoCraftERC6551Registry")
-    const zexCraftContract = await zexCraftContractFactory.deploy(params.implementation)
+    const pegoCraft = networks[network.name].pegoCraft
+    const zexCraftContractFactory = await ethers.getContractFactory("CraftToken")
+    const zexCraftContract = await zexCraftContractFactory.deploy(pegoCraft)
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
@@ -23,7 +19,7 @@ task("deploy-registry", "Deploys the PegoCraftERC6551Registry contract")
 
     await zexCraftContract.deployTransaction.wait(networks[network.name].confirmations)
 
-    console.log("\nDeployed PegoCraftERC6551Registry contract to:", zexCraftContract.address)
+    console.log("\nDeployed CraftToken contract to:", zexCraftContract.address)
 
     if (network.name === "localFunctionsTestnet") {
       return
@@ -40,7 +36,7 @@ task("deploy-registry", "Deploys the PegoCraftERC6551Registry contract")
         console.log("\nVerifying contract...")
         await run("verify:verify", {
           address: zexCraftContract.address,
-          constructorArguments: [params.implementation],
+          constructorArguments: [pegoCraft],
         })
         console.log("Contract verified")
       } catch (error) {
@@ -59,5 +55,5 @@ task("deploy-registry", "Deploys the PegoCraftERC6551Registry contract")
       )
     }
 
-    console.log(`\PegoCraftERC6551Registry contract deployed to ${zexCraftContract.address} on ${network.name}`)
+    console.log(`\n CraftToken contract deployed to ${zexCraftContract.address} on ${network.name}`)
   })

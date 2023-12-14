@@ -2,53 +2,22 @@ const { types } = require("hardhat/config")
 const { networks } = require("../../networks")
 const fs = require("fs")
 
-task("deploy-zexcraft", "Deploys the ZexCraftNFT contract")
+task("deploy-zexcraft", "Deploys the PegoCraftNFT contract")
   .addOptionalParam("verify", "Set to true to verify contract", false, types.boolean)
   .setAction(async (taskArgs) => {
-    console.log(`Deploying ZexCraftNFT contract to ${network.name}`)
+    console.log(`Deploying PegoCraftNFT contract to ${network.name}`)
 
-    const linkToken = networks.avalancheFuji.linkToken
-    const linkWrapper = networks.avalancheFuji.linkWrapper
-    const router = networks.avalancheFuji.functionsRouter
-    const accountRegistry = networks.avalancheFuji.accountRegistry
-    const donId = networks.avalancheFuji.donIdHash
-    const relRegistry = networks.avalancheFuji.relRegistry
-    const generateSourceCode = fs.readFileSync("./generate-zexcraft-nft.js").toString()
-    const fetchSourceCode = fs.readFileSync("./fetch-zexcraft-nft.js").toString()
-    const callbackGasLimit = "300000"
-    const mintFee = networks.avalancheFuji.mintFee
-    const baseChainAddress = networks.avalancheFuji.baseChainAddress
+    const params = {
+      relRegistry: networks[network.name].relRegistry,
+      mintFee: networks[network.name].mintFee,
+      craftToken: networks[network.name].craftToken,
+    }
 
-    console.log([
-      linkToken,
-      linkWrapper,
-      router,
-      accountRegistry,
-      donId,
-      relRegistry,
-      generateSourceCode.length != 0,
-      fetchSourceCode.length != 0,
-      callbackGasLimit,
-      mintFee,
-      baseChainAddress,
-    ])
     console.log("\n__Compiling Contracts__")
     await run("compile")
 
-    const zexCraftContractFactory = await ethers.getContractFactory("ZexCraftNFT")
-    const zexCraftContract = await zexCraftContractFactory.deploy([
-      linkToken,
-      linkWrapper,
-      router,
-      donId,
-      relRegistry,
-      generateSourceCode,
-      fetchSourceCode,
-      callbackGasLimit,
-      mintFee,
-      baseChainAddress,
-      accountRegistry,
-    ])
+    const zexCraftContractFactory = await ethers.getContractFactory("PegoCraftNFT")
+    const zexCraftContract = await zexCraftContractFactory.deploy(params.relRegistry, params.mintFee, params.craftToken)
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
@@ -58,7 +27,7 @@ task("deploy-zexcraft", "Deploys the ZexCraftNFT contract")
 
     await zexCraftContract.deployTransaction.wait(networks[network.name].confirmations)
 
-    console.log("\nDeployed ZexCraftNFT contract to:", zexCraftContract.address)
+    console.log("\nDeployed PegoCraftNFT contract to:", zexCraftContract.address)
 
     if (network.name === "localFunctionsTestnet") {
       return
@@ -75,21 +44,7 @@ task("deploy-zexcraft", "Deploys the ZexCraftNFT contract")
         console.log("\nVerifying contract...")
         await run("verify:verify", {
           address: zexCraftContract.address,
-          constructorArguments: [
-            [
-              linkToken,
-              linkWrapper,
-              router,
-              donId,
-              relRegistry,
-              generateSourceCode,
-              fetchSourceCode,
-              callbackGasLimit,
-              mintFee,
-              baseChainAddress,
-              accountRegistry,
-            ],
-          ],
+          constructorArguments: [params.relRegistry, params.mintFee, params.craftToken],
         })
         console.log("Contract verified")
       } catch (error) {
@@ -108,5 +63,5 @@ task("deploy-zexcraft", "Deploys the ZexCraftNFT contract")
       )
     }
 
-    console.log(`\ZexCraftNFT contract deployed to ${zexCraftContract.address} on ${network.name}`)
+    console.log(`\PegoCraftNFT contract deployed to ${zexCraftContract.address} on ${network.name}`)
   })

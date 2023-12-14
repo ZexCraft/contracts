@@ -15,7 +15,6 @@ const SOLC_SETTINGS = {
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
-  defaultNetwork: "localFunctionsTestnet",
   solidity: {
     compilers: [
       {

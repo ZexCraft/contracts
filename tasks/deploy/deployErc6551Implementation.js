@@ -1,14 +1,14 @@
 const { networks } = require("../../networks")
 
-task("deploy-implementation", "Deploys the ZexCraftERC6551Account contract")
+task("deploy-implementation", "Deploys the PegoCraftERC6551Account contract")
   .addOptionalParam("verify", "Set to true to verify contract", false, types.boolean)
   .setAction(async (taskArgs) => {
-    console.log(`Deploying ZexCraftERC6551Account contract to ${network.name}`)
+    console.log(`Deploying PegoCraftERC6551Account contract to ${network.name}`)
 
     console.log("\n__Compiling Contracts__")
     await run("compile")
 
-    const zexCraftContractFactory = await ethers.getContractFactory("ZexCraftERC6551Account")
+    const zexCraftContractFactory = await ethers.getContractFactory("PegoCraftERC6551Account")
     const zexCraftContract = await zexCraftContractFactory.deploy()
 
     console.log(
@@ -19,7 +19,7 @@ task("deploy-implementation", "Deploys the ZexCraftERC6551Account contract")
 
     await zexCraftContract.deployTransaction.wait(networks[network.name].confirmations)
 
-    console.log("\nDeployed ZexCraftERC6551Account contract to:", zexCraftContract.address)
+    console.log("\nDeployed PegoCraftERC6551Account contract to:", zexCraftContract.address)
 
     if (network.name === "localFunctionsTestnet") {
       return
@@ -55,5 +55,5 @@ task("deploy-implementation", "Deploys the ZexCraftERC6551Account contract")
       )
     }
 
-    console.log(`\ZexCraftERC6551Account contract deployed to ${zexCraftContract.address} on ${network.name}`)
+    console.log(`\PegoCraftERC6551Account contract deployed to ${zexCraftContract.address} on ${network.name}`)
   })

@@ -1,4 +1,4 @@
-exports.deployZexCraft = require("../deploy/deployPegoCraft.js")
+exports.deployPegoCraft = require("../deploy/deployPegoCraft.js")
 exports.deployImplementation = require("../deploy/deployErc6551Implementation.js")
 exports.deployRegistry = require("../deploy/deployErc6551Registry.js")
 exports.deployPowerups = require("./deployPowerups.js")

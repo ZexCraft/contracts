@@ -1,18 +1,18 @@
 const { networks } = require("../../networks")
 
-task("deploy-relationship-registry", "Deploys the ZexCraftRelationshipRegistry contract")
+task("deploy-relationship-registry", "Deploys the PegoCraftRelationshipRegistry contract")
   .addOptionalParam("verify", "Set to true to verify contract", false, types.boolean)
   .setAction(async (taskArgs) => {
-    console.log(`Deploying ZexCraftRelationshipRegistry contract to ${network.name}`)
+    console.log(`Deploying PegoCraftRelationshipRegistry contract to ${network.name}`)
 
     console.log("\n__Compiling Contracts__")
     await run("compile")
 
     const params = {
       accountRegistry: networks[network.name].accountRegistry,
-      ccipRouter: networks[network.name].ccipRouter,
+      relImplementation: "networks[network.name]",
     }
-    const relationshipFactory = await ethers.getContractFactory("ZexCraftRelationshipRegistry")
+    const relationshipFactory = await ethers.getContractFactory("PegoCraftRelationshipRegistry")
     const relationshipRegistry = await relationshipFactory.deploy(params.accountRegistry, params.ccipRouter)
 
     console.log(
@@ -23,7 +23,7 @@ task("deploy-relationship-registry", "Deploys the ZexCraftRelationshipRegistry c
 
     await relationshipRegistry.deployTransaction.wait(networks[network.name].confirmations)
 
-    console.log("\nDeployed ZexCraftRelationshipRegistry contract to:", relationshipRegistry.address)
+    console.log("\nDeployed PegoCraftRelationshipRegistry contract to:", relationshipRegistry.address)
 
     if (network.name === "localFunctionsTestnet") {
       return
@@ -59,5 +59,7 @@ task("deploy-relationship-registry", "Deploys the ZexCraftRelationshipRegistry c
       )
     }
 
-    console.log(`\ZexCraftRelationshipRegistry contract deployed to ${relationshipRegistry.address} on ${network.name}`)
+    console.log(
+      `\PegoCraftRelationshipRegistry contract deployed to ${relationshipRegistry.address} on ${network.name}`
+    )
   })

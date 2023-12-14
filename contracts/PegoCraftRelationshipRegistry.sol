@@ -6,9 +6,8 @@ import "./interfaces/IERC6551Registry.sol";
 import "./interfaces/IRelationship.sol";
 import "./interfaces/IERC6551Account.sol";
 import "./interfaces/IERC721URIStorage.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract ZexCraftRelationshipRegistry is Ownable {
+contract PegoCraftRelationshipRegistry {
   mapping(address => bool) public relationshipExists;
 
   IERC6551Registry public accountRegistry;
@@ -16,26 +15,23 @@ contract ZexCraftRelationshipRegistry is Ownable {
 
   mapping(address => mapping(address => bool)) public pairs;
 
-  constructor(IERC6551Registry _accountRegistry) Ownable(msg.sender) {
+  constructor(IERC6551Registry _accountRegistry, address _relationshipImplementation) {
+    relationshipImplementation = _relationshipImplementation;
     accountRegistry = _accountRegistry;
   }
 
   event RelationshipCreated(NFT nft1, NFT nft2, address relationship);
 
-  modifier onlyZexCraftERC6551Account(address otherAccount) {
+  modifier onlyPegoCraftERC6551Account(address otherAccount) {
     require(accountRegistry.isAccount(msg.sender), "TxSender not account");
     require(accountRegistry.isAccount(otherAccount), "Pair not account");
     _;
   }
 
-  function setRelationshipImplementation(address _relationshipImplementation) public onlyOwner {
-    relationshipImplementation = _relationshipImplementation;
-  }
-
   function createRelationship(
     address otherAccount,
     bytes memory otherAccountsignature
-  ) external onlyZexCraftERC6551Account(otherAccount) returns (address) {
+  ) external onlyPegoCraftERC6551Account(otherAccount) returns (address) {
     NFT memory nft1 = _getNft(msg.sender);
     NFT memory nft2 = _getNft(otherAccount);
     return _createRelationship(nft1, nft2, otherAccountsignature);

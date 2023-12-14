@@ -5,7 +5,7 @@ import "./interfaces/IRelationship.sol";
 import "./interfaces/IERC6551Account.sol";
 import "./interfaces/IPegoCraftNFT.sol";
 
-contract ZexCraftRelationship {
+contract PegoCraftRelationship {
   uint256 public state;
 
   NFT[2] public nfts;

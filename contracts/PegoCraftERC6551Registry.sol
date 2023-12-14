@@ -1,21 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
-import "../interfaces/IERC6551Registry.sol";
 import "@openzeppelin/contracts/interfaces/IERC721.sol";
 import "@openzeppelin/contracts/utils/Create2.sol";
 
-contract ZexCraftERC6551RegistryCrossChain is IERC6551Registry {
+import "./interfaces/IERC6551Registry.sol";
 
+contract PegoCraftERC6551Registry is IERC6551Registry {
   error InitializationFailed();
-  address immutable i_implementation;
-  
+  address public immutable i_implementation;
+
   mapping(address => bool) public accountExists;
 
   constructor(address implementation) {
     i_implementation = implementation;
   }
-
 
   function createAccount(
     address implementation,
@@ -25,36 +24,22 @@ contract ZexCraftERC6551RegistryCrossChain is IERC6551Registry {
     uint256 salt,
     bytes memory initData
   ) external payable returns (address) {
-    return _createAccount(implementation, chainId, tokenContract, tokenId);
-   
+    return _createAccount(chainId, tokenContract, tokenId);
   }
 
-
-
-  function _createAccount(
-    address implementation,
-    uint256 chainId,
-    address tokenContract,
-    uint256 tokenId
-  ) internal returns (address) {
-     require(implementation == i_implementation, "Invalid implementation");
+  function _createAccount(uint256 chainId, address tokenContract, uint256 tokenId) internal returns (address) {
     require(msg.sender == IERC721(tokenContract).ownerOf(tokenId), "Invalid owner");
-    bytes memory code = _creationCode(implementation, chainId, tokenContract, tokenId, 1);
+    bytes memory code = _creationCode(i_implementation, chainId, tokenContract, tokenId, 1);
     address account_ = Create2.computeAddress(bytes32(uint256(1)), keccak256(code));
 
     if (account_.code.length != 0) return account_;
 
     account_ = Create2.deploy(0, bytes32(uint256(1)), code);
 
-    (bool success, ) = account_.call(abi.encodeWithSignature("initialize(address)", address(this)));
-    require(success,"Initialization failed");
-  
-    emit AccountCreated(account_, implementation, chainId, tokenContract, tokenId, uint256(1));
+    emit AccountCreated(account_, i_implementation, chainId, tokenContract, tokenId, uint256(1));
     return account_;
   }
 
-  
-  
   function account(
     address implementation,
     uint256 chainId,
@@ -62,16 +47,11 @@ contract ZexCraftERC6551RegistryCrossChain is IERC6551Registry {
     uint256 tokenId,
     uint256 salt
   ) external view returns (address) {
-    return _account(implementation, chainId, tokenContract, tokenId );
+    return _account(chainId, tokenContract, tokenId);
   }
 
-  function _account(
-    address implementation,
-    uint256 chainId,
-    address tokenContract,
-    uint256 tokenId
-  ) internal view returns (address) {
-    bytes32 bytecodeHash = keccak256(_creationCode(implementation, chainId, tokenContract, tokenId, uint256(1)));
+  function _account(uint256 chainId, address tokenContract, uint256 tokenId) internal view returns (address) {
+    bytes32 bytecodeHash = keccak256(_creationCode(i_implementation, chainId, tokenContract, tokenId, uint256(1)));
 
     return Create2.computeAddress(bytes32(uint256(1)), bytecodeHash);
   }
@@ -92,7 +72,7 @@ contract ZexCraftERC6551RegistryCrossChain is IERC6551Registry {
       );
   }
 
-  function isAccount(address accountAddress) external view override returns (bool) {
+  function isAccount(address accountAddress) external view returns (bool) {
     return accountExists[accountAddress];
   }
 }

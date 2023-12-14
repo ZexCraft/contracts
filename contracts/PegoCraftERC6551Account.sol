@@ -20,35 +20,42 @@ interface IERC6551Executable {
   ) external payable returns (bytes memory);
 }
 
-contract ZexCraftERC6551Account is IERC165, IERC1271, IERC6551Account, IERC6551Executable {
+contract PegoCraftERC6551Account is IERC165, IERC1271, IERC6551Account, IERC6551Executable {
   uint256 public state;
- 
+
   bool public initialized;
 
   IERC6551Registry public accountRegistry;
   IRelationshipRegistry public relationshipRegistry;
 
   receive() external payable {}
-  
-  modifier onlyOnce{
-    require(!initialized,"already initialized");
-    initialized=true;
+
+  modifier onlyOnce() {
+    require(!initialized, "already initialized");
+    initialized = true;
     _;
   }
 
-  function initialize(address _accountRegistry,address _relationshipRegistry)  onlyOnce external {
+  function initialize(address _accountRegistry, address _relationshipRegistry) external onlyOnce {
     accountRegistry = IERC6551Registry(_accountRegistry);
     relationshipRegistry = IRelationshipRegistry(_relationshipRegistry);
   }
 
-  function getCreateRelationshipData(address otherAccount,bytes[2] memory signatures)public pure returns(bytes memory)
-  {
-    return abi.encodeWithSignature("createRelationship(address,bytes[2])",otherAccount,signatures);
+  function getCreateRelationshipData(
+    address otherAccount,
+    bytes[2] memory signatures
+  ) public pure returns (bytes memory) {
+    return abi.encodeWithSignature("createRelationship(address,bytes[2])", otherAccount, signatures);
   }
 
-  function createRelationship(address _relationshipRegistry,address otherAccount,bytes[2] memory signatures) external returns (address) {
+  function createRelationship(
+    address _relationshipRegistry,
+    address otherAccount,
+    bytes[2] memory signatures
+  ) external returns (address) {
     require(_isValidSigner(msg.sender), "Invalid signer");
-    return abi.decode(_execute(_relationshipRegistry, 0, getCreateRelationshipData(otherAccount,signatures), 0), (address));
+    return
+      abi.decode(_execute(_relationshipRegistry, 0, getCreateRelationshipData(otherAccount, signatures), 0), (address));
   }
 
   function execute(
@@ -59,7 +66,6 @@ contract ZexCraftERC6551Account is IERC165, IERC1271, IERC6551Account, IERC6551E
   ) external payable virtual returns (bytes memory result) {
     return _execute(to, value, data, operation);
   }
-
 
   function _execute(
     address to,
@@ -115,34 +121,29 @@ contract ZexCraftERC6551Account is IERC165, IERC1271, IERC6551Account, IERC6551E
     return abi.decode(footer, (uint256, address, uint256));
   }
 
-  function owner() public view  returns (address) {
+  function owner() public view returns (address) {
     (uint256 chainId, address tokenContract, uint256 tokenId) = token();
 
     return IERC721(tokenContract).ownerOf(tokenId);
   }
 
   function _isValidSigner(address signer) internal view virtual returns (bool) {
-    return signer == owner()|| isParent(signer,owner()) ;
+    return signer == owner() || isParent(signer, owner());
   }
 
-  function isParent(address signer,address parent) public view  returns (bool) {
-    if(relationshipRegistry.isRelationship(parent))
-    {
-      (address parent1,address parent2)=IRelationship(parent).getParents();
-      return isParent(signer,parent1)||isParent(signer,parent2);
-    }else if(accountRegistry.isAccount(parent)){
+  function isParent(address signer, address parent) public view returns (bool) {
+    if (relationshipRegistry.isRelationship(parent)) {
+      (address parent1, address parent2) = IRelationship(parent).getParents();
+      return isParent(signer, parent1) || isParent(signer, parent2);
+    } else if (accountRegistry.isAccount(parent)) {
       return IERC6551Account(payable(parent)).isSigner(signer);
-    }else{
-      if(signer==parent) return true;
+    } else {
+      if (signer == parent) return true;
       else return false;
     }
   }
 
-
-
-
-
-  function isSigner(address signer) external view  returns (bool) {
+  function isSigner(address signer) external view returns (bool) {
     return _isValidSigner(signer);
   }
 }

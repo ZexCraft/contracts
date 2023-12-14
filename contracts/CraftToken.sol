@@ -17,8 +17,8 @@ contract CraftToken is ERC20, ERC20Burnable, Ownable {
     _;
   }
 
-  function mint(address to, uint256 amount) external payable {
-    _mint(to, amount);
+  function mint(address to) external {
+    _mint(to, 1000000000000000000);
   }
 
   function burnTokens(address creator, uint256 amount) external onlyPegoCraftNFT returns (bool) {

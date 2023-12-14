@@ -12,10 +12,10 @@ task("verify-contract", "Verifies contract")
     const params = {
       router: networks[network.name].ccipRouter,
       mintFee: networks.avalancheFuji.mintFee,
-      zexcraft: networks[network.name].zexcraftNft,
+      pegocraft: networks[network.name].pegocraftNft,
     }
 
-    const constructorArguments = [params.router, params.mintFee, params.zexcraft]
+    const constructorArguments = [params.router, params.mintFee, params.pegocraft]
 
     console.log(`Verifying contract to ${taskArgs.contract}`)
 

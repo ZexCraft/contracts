@@ -9,11 +9,13 @@ task("deploy-relationship-registry", "Deploys the PegoCraftRelationshipRegistry 
     await run("compile")
 
     const params = {
-      accountRegistry: networks[network.name].accountRegistry,
-      relImplementation: "networks[network.name]",
+      accountRegistry: networks[network.name].registry,
+      relImplementation: networks[network.name].relImplementation,
     }
+    console.log(params.accountRegistry)
+    console.log(params.relImplementation)
     const relationshipFactory = await ethers.getContractFactory("PegoCraftRelationshipRegistry")
-    const relationshipRegistry = await relationshipFactory.deploy(params.accountRegistry, params.ccipRouter)
+    const relationshipRegistry = await relationshipFactory.deploy(params.accountRegistry, params.relImplementation)
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
@@ -40,7 +42,7 @@ task("deploy-relationship-registry", "Deploys the PegoCraftRelationshipRegistry 
         console.log("\nVerifying contract...")
         await run("verify:verify", {
           address: relationshipRegistry.address,
-          constructorArguments: [params.accountRegistry, params.ccipRouter],
+          constructorArguments: [params.accountRegistry, params.relImplementation],
         })
         console.log("Contract verified")
       } catch (error) {

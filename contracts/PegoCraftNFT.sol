@@ -12,7 +12,7 @@ import "./interfaces/IRelationship.sol";
 import "./interfaces/IERC721URIStorage.sol";
 import "./interfaces/ICraftToken.sol";
 
-contract PegoCraft is ERC721, ERC721URIStorage, Ownable {
+contract PegoCraftNFT is ERC721, ERC721URIStorage, Ownable {
   using Strings for uint256;
 
   bool public isInitialized;
@@ -23,15 +23,10 @@ contract PegoCraft is ERC721, ERC721URIStorage, Ownable {
   IERC6551Registry public accountRegistry;
   mapping(address => bool) public accounts;
 
-  constructor(
-    address _relRegistry,
-    uint256 _mintFee,
-    address _craftToken
-  ) ERC721("PegoCraft", "PCT") Ownable(msg.sender) {
+  constructor(address _relRegistry, uint256 _mintFee) ERC721("PegoCraft", "PCT") Ownable(msg.sender) {
     relRegistry = IRelationshipRegistry(_relRegistry);
     mintFee = _mintFee;
     tokenIdCounter = 0;
-    craftToken = _craftToken;
     isInitialized = false;
   }
 

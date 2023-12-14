@@ -33,14 +33,15 @@ module.exports = {
   etherscan: {
     apiKey: {
       polygonMumbai: networks.polygonMumbai.verifyApiKey,
+      pegoMainnet: networks.pegoMainnet.verifyApiKey,
     },
     customChains: [
       {
-        network: "baseGoerli",
-        chainId: 84531,
+        network: "pegoMainnet",
+        chainId: 20201022,
         urls: {
-          apiURL: "https://api-goerli.basescan.org/api",
-          browserURL: "https://goerli.basescan.org/",
+          apiURL: "https://scan.pego.network/api",
+          browserURL: "https://scan.pego.network/",
         },
       },
     ],

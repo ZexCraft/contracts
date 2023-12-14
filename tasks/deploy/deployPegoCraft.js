@@ -2,7 +2,7 @@ const { types } = require("hardhat/config")
 const { networks } = require("../../networks")
 const fs = require("fs")
 
-task("deploy-zexcraft", "Deploys the PegoCraftNFT contract")
+task("deploy-pegocraft", "Deploys the PegoCraftNFT contract")
   .addOptionalParam("verify", "Set to true to verify contract", false, types.boolean)
   .setAction(async (taskArgs) => {
     console.log(`Deploying PegoCraftNFT contract to ${network.name}`)
@@ -10,24 +10,25 @@ task("deploy-zexcraft", "Deploys the PegoCraftNFT contract")
     const params = {
       relRegistry: networks[network.name].relRegistry,
       mintFee: networks[network.name].mintFee,
-      craftToken: networks[network.name].craftToken,
     }
 
     console.log("\n__Compiling Contracts__")
     await run("compile")
 
-    const zexCraftContractFactory = await ethers.getContractFactory("PegoCraftNFT")
-    const zexCraftContract = await zexCraftContractFactory.deploy(params.relRegistry, params.mintFee, params.craftToken)
+    console.log(params.relRegistry)
+    console.log(params.mintFee)
+    const pegoCraftContractFactory = await ethers.getContractFactory("PegoCraftNFT")
+    const pegoCraftContract = await pegoCraftContractFactory.deploy(params.relRegistry, params.mintFee)
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
-        zexCraftContract.deployTransaction.hash
+        pegoCraftContract.deployTransaction.hash
       } to be confirmed...`
     )
 
-    await zexCraftContract.deployTransaction.wait(networks[network.name].confirmations)
+    await pegoCraftContract.deployTransaction.wait(networks[network.name].confirmations)
 
-    console.log("\nDeployed PegoCraftNFT contract to:", zexCraftContract.address)
+    console.log("\nDeployed PegoCraftNFT contract to:", pegoCraftContract.address)
 
     if (network.name === "localFunctionsTestnet") {
       return
@@ -43,8 +44,8 @@ task("deploy-zexcraft", "Deploys the PegoCraftNFT contract")
       try {
         console.log("\nVerifying contract...")
         await run("verify:verify", {
-          address: zexCraftContract.address,
-          constructorArguments: [params.relRegistry, params.mintFee, params.craftToken],
+          address: pegoCraftContract.address,
+          constructorArguments: [params.relRegistry, params.mintFee],
         })
         console.log("Contract verified")
       } catch (error) {
@@ -63,5 +64,5 @@ task("deploy-zexcraft", "Deploys the PegoCraftNFT contract")
       )
     }
 
-    console.log(`\PegoCraftNFT contract deployed to ${zexCraftContract.address} on ${network.name}`)
+    console.log(`\PegoCraftNFT contract deployed to ${pegoCraftContract.address} on ${network.name}`)
   })

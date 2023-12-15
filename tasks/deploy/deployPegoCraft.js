@@ -9,6 +9,7 @@ task("deploy-pegocraft", "Deploys the PegoCraftNFT contract")
 
     const params = {
       relRegistry: networks[network.name].relRegistry,
+      registry: networks[network.name].registry,
       mintFee: networks[network.name].mintFee,
     }
 
@@ -18,7 +19,7 @@ task("deploy-pegocraft", "Deploys the PegoCraftNFT contract")
     console.log(params.relRegistry)
     console.log(params.mintFee)
     const pegoCraftContractFactory = await ethers.getContractFactory("PegoCraftNFT")
-    const pegoCraftContract = await pegoCraftContractFactory.deploy(params.relRegistry, params.mintFee)
+    const pegoCraftContract = await pegoCraftContractFactory.deploy(params.relRegistry, params.registry, params.mintFee)
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
@@ -45,7 +46,7 @@ task("deploy-pegocraft", "Deploys the PegoCraftNFT contract")
         console.log("\nVerifying contract...")
         await run("verify:verify", {
           address: pegoCraftContract.address,
-          constructorArguments: [params.relRegistry, params.mintFee],
+          constructorArguments: [params.relRegistry, params.registry, params.mintFee],
         })
         console.log("Contract verified")
       } catch (error) {

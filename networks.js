@@ -53,13 +53,20 @@ const networks = {
   },
   pegoTestnet: {
     url: process.env.PEGO_TESTNET_RPC_URL || "UNSET",
-    gasPrice: 20_000_000_000,
+    gasPrice: 20_000_000_00_000,
     nontce: undefined,
     accounts,
     verifyApiKey: "UNSET",
     chainId: 123456,
     confirmations: 5,
     nativeCurrencySymbol: "tPG",
+    implementation: "0x16CBC6Cb38D19B73A3b545109c70b2031d20EA37",
+    registry: "0xd37ca03a13bD2725306Fec4071855EE556037e2e",
+    relImplementation: "0x4ab8f50796b059aE5C8b8534afC6bb4c84912ff6",
+    relRegistry: "0x7125e097a72cCf547ED6e9e98bCc09BE3AC61997",
+    pegoCraft: "0x50751BD8d7b0a84c422DE96A56426a370F31a42D",
+    mintFee: "100000000000000000",
+    craftToken: "",
   },
 }
 

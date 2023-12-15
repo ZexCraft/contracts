@@ -34,6 +34,7 @@ module.exports = {
     apiKey: {
       polygonMumbai: networks.polygonMumbai.verifyApiKey,
       pegoMainnet: networks.pegoMainnet.verifyApiKey,
+      pegoTestnet: networks.pegoTestnet.verifyApiKey,
     },
     customChains: [
       {

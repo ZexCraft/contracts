@@ -1,10 +1,3 @@
-// All supported networks and related contract addresses are defined here.
-//
-// LINK token addresses: https://docs.chain.link/resources/link-token-contracts/
-// Price feeds addresses: https://docs.chain.link/data-feeds/price-feeds/addresses
-// Chain IDs: https://chainlist.org/?testnets=true
-
-// Loads environment variables from .env.enc file (if it exists)
 require("@chainlink/env-enc").config()
 
 const DEFAULT_VERIFICATION_BLOCK_CONFIRMATIONS = 3
@@ -57,6 +50,16 @@ const networks = {
     chainId: 20201022,
     confirmations: 5,
     nativeCurrencySymbol: "PG",
+  },
+  pegoTestnet: {
+    url: process.env.PEGO_TESTNET_RPC_URL || "UNSET",
+    gasPrice: 20_000_000_000,
+    nontce: undefined,
+    accounts,
+    verifyApiKey: "UNSET",
+    chainId: 123456,
+    confirmations: 5,
+    nativeCurrencySymbol: "tPG",
   },
 }
 

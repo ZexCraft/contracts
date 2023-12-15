@@ -20,7 +20,7 @@ contract PegoCraftRelationshipRegistry {
     accountRegistry = _accountRegistry;
   }
 
-  event RelationshipCreated(NFT nft1, NFT nft2, address relationship);
+  event RelationshipCreated(address parent1, address parent2, address relationship);
 
   modifier onlyPegoCraftERC6551Account(address otherAccount) {
     require(accountRegistry.isAccount(msg.sender), "TxSender not account");
@@ -29,17 +29,20 @@ contract PegoCraftRelationshipRegistry {
   }
 
   function createRelationship(
+    address breedingAccount,
     address otherAccount,
     bytes memory otherAccountsignature
   ) external onlyPegoCraftERC6551Account(otherAccount) returns (address) {
     NFT memory nft1 = _getNft(msg.sender);
     NFT memory nft2 = _getNft(otherAccount);
-    return _createRelationship(nft1, nft2, otherAccountsignature);
+    return _createRelationship(nft1, nft2, breedingAccount, otherAccount, otherAccountsignature);
   }
 
   function _createRelationship(
     NFT memory nft1,
     NFT memory nft2,
+    address breedingAccount,
+    address otherAccount,
     bytes memory otherAccountsignature
   ) internal returns (address) {
     require(pairs[nft1.tokenAddress][nft2.tokenAddress] == false, "pair already exists");
@@ -52,7 +55,7 @@ contract PegoCraftRelationshipRegistry {
     relationshipExists[relationship] = true;
     pairs[nft1.tokenAddress][nft2.tokenAddress] = true;
     pairs[nft2.tokenAddress][nft1.tokenAddress] = true;
-    emit RelationshipCreated(nft1, nft2, relationship);
+    emit RelationshipCreated(breedingAccount, otherAccount, relationship);
 
     return relationship;
   }

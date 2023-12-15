@@ -11,6 +11,7 @@ import "./interfaces/IERC6551Registry.sol";
 import "./interfaces/IRelationship.sol";
 import "./interfaces/IERC721URIStorage.sol";
 import "./interfaces/ICraftToken.sol";
+import "./interfaces/IERC6551Registry.sol";
 
 contract PegoCraftNFT is ERC721, ERC721URIStorage, Ownable {
   using Strings for uint256;
@@ -23,15 +24,33 @@ contract PegoCraftNFT is ERC721, ERC721URIStorage, Ownable {
   IERC6551Registry public accountRegistry;
   mapping(address => bool) public accounts;
 
-  constructor(address _relRegistry, uint256 _mintFee) ERC721("PegoCraft", "PCT") Ownable(msg.sender) {
+  constructor(
+    address _relRegistry,
+    address accountRegistry,
+    uint256 _mintFee
+  ) ERC721("PegoCraft", "PCT") Ownable(msg.sender) {
     relRegistry = IRelationshipRegistry(_relRegistry);
     mintFee = _mintFee;
     tokenIdCounter = 0;
     isInitialized = false;
   }
 
-  event PegoCraftNFTCreated(uint256 tokenId, string tokenUri, address owner, bool nftType);
-  event PegoCraftNFTBred(uint256 tokenId, string tokenUri, address owner, NFT parent1, NFT parent2, bool nftType);
+  event PegoCraftNFTCreated(
+    uint256 indexed tokenId,
+    string indexed tokenUri,
+    address indexed owner,
+    address indexed account,
+    bool nftType
+  );
+  event PegoCraftNFTBred(
+    uint256 indexed tokenId,
+    string indexed tokenUri,
+    address indexed owner,
+    NFT parent1,
+    NFT parent2,
+    address indexed account,
+    bool nftType
+  );
 
   modifier onlyRelationship() {
     require(relRegistry.isRelationship(msg.sender), "only relationship");
@@ -48,18 +67,22 @@ contract PegoCraftNFT is ERC721, ERC721URIStorage, Ownable {
     craftToken = _craftTokenAddress;
   }
 
-  function createNft(
-    string memory tokenURI,
-    address creator,
-    bytes memory signature
-  ) external onlyOwner returns (uint256 requestId) {
-    // Check Signature
-    require(IERC20(craftToken).allowance(creator, address(this)) >= mintFee, "not enough fee");
-    require(ICraftToken(craftToken).burnTokens(creator, mintFee), "burn failed");
-    _mint(creator, tokenIdCounter);
+  function createNft(string memory tokenURI, bytes memory signature) external onlyOwner returns (address account) {
+    // TODO: Check Signature
+    require(IERC20(craftToken).allowance(msg.sender, address(this)) >= mintFee, "not enough fee");
+    require(ICraftToken(craftToken).burnTokens(msg.sender, mintFee), "burn failed");
+    _mint(msg.sender, tokenIdCounter);
     _setTokenURI(tokenIdCounter, tokenURI);
+    account = IERC6551Registry(accountRegistry).createAccount(
+      address(0),
+      block.chainid,
+      address(this),
+      tokenIdCounter,
+      0,
+      ""
+    );
     tokenIdCounter++;
-    emit PegoCraftNFTCreated(tokenIdCounter, tokenURI, creator, false);
+    emit PegoCraftNFTCreated(tokenIdCounter, tokenURI, msg.sender, account, false);
   }
 
   function createBaby(
@@ -68,7 +91,7 @@ contract PegoCraftNFT is ERC721, ERC721URIStorage, Ownable {
     string memory tokenURI,
     bytes memory createBabyData,
     bytes memory signatures
-  ) external onlyOwner returns (uint256 requestId) {
+  ) external onlyOwner returns (address account) {
     // check singatures
 
     // Change msg.sender after decoding the data
@@ -76,8 +99,16 @@ contract PegoCraftNFT is ERC721, ERC721URIStorage, Ownable {
     require(ICraftToken(craftToken).burnTokens(msg.sender, mintFee), "burn failed");
     _mint(msg.sender, tokenIdCounter);
     _setTokenURI(tokenIdCounter, tokenURI);
+    account = IERC6551Registry(accountRegistry).createAccount(
+      address(0),
+      block.chainid,
+      address(this),
+      tokenIdCounter,
+      0,
+      ""
+    );
     tokenIdCounter++;
-    emit PegoCraftNFTBred(tokenIdCounter, tokenURI, msg.sender, nft1, nft2, true);
+    emit PegoCraftNFTBred(tokenIdCounter, tokenURI, msg.sender, nft1, nft2, account, true);
   }
 
   function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {

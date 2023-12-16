@@ -12,8 +12,8 @@ contract CraftToken is ERC20, ERC20Burnable, Ownable {
     i_pegoCraftNftAddress = pegoCraftNFT;
   }
 
-  modifier onlyPegoCraftNFT() {
-    require(msg.sender == i_pegoCraftNftAddress, "Only PegoCraft NFT can mint new tokens");
+  modifier onlyInCraftNFT() {
+    require(msg.sender == i_pegoCraftNftAddress, "Only InCraft NFT can mint new tokens");
     _;
   }
 
@@ -21,7 +21,7 @@ contract CraftToken is ERC20, ERC20Burnable, Ownable {
     _mint(to, 1000000000000000000);
   }
 
-  function burnTokens(address creator, uint256 amount) external onlyPegoCraftNFT returns (bool) {
+  function burnTokens(address creator, uint256 amount) external onlyInCraftNFT returns (bool) {
     burnFrom(creator, amount);
     return true;
   }

@@ -7,7 +7,7 @@ import "./interfaces/IRelationship.sol";
 import "./interfaces/IERC6551Account.sol";
 import "./interfaces/IERC721URIStorage.sol";
 
-contract PegoCraftRelationshipRegistry {
+contract InCraftRelationshipRegistry {
   mapping(address => bool) public relationshipExists;
 
   IERC6551Registry public accountRegistry;
@@ -22,7 +22,7 @@ contract PegoCraftRelationshipRegistry {
 
   event RelationshipCreated(address parent1, address parent2, address relationship);
 
-  modifier onlyPegoCraftERC6551Account(address otherAccount) {
+  modifier onlyInCraftERC6551Account(address otherAccount) {
     require(accountRegistry.isAccount(msg.sender), "TxSender not account");
     require(accountRegistry.isAccount(otherAccount), "Pair not account");
     _;
@@ -32,7 +32,7 @@ contract PegoCraftRelationshipRegistry {
     address breedingAccount,
     address otherAccount,
     bytes memory otherAccountsignature
-  ) external onlyPegoCraftERC6551Account(otherAccount) returns (address) {
+  ) external onlyInCraftERC6551Account(otherAccount) returns (address) {
     NFT memory nft1 = _getNft(msg.sender);
     NFT memory nft2 = _getNft(otherAccount);
     return _createRelationship(nft1, nft2, breedingAccount, otherAccount, otherAccountsignature);

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-contract PegoCraftPowerups {
+contract InCraftPowerups {
   struct Powerup {
     string name;
     string power;

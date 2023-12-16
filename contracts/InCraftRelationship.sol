@@ -3,9 +3,9 @@ pragma solidity ^0.8.19;
 
 import "./interfaces/IRelationship.sol";
 import "./interfaces/IERC6551Account.sol";
-import "./interfaces/IPegoCraftNFT.sol";
+import "./interfaces/IInCraftNFT.sol";
 
-contract PegoCraftRelationship {
+contract InCraftRelationship {
   uint256 public state;
 
   NFT[2] public nfts;

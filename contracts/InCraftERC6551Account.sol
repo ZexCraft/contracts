@@ -20,7 +20,7 @@ interface IERC6551Executable {
   ) external payable returns (bytes memory);
 }
 
-contract PegoCraftERC6551Account is IERC165, IERC1271, IERC6551Account, IERC6551Executable {
+contract InCraftERC6551Account is IERC165, IERC1271, IERC6551Account, IERC6551Executable {
   uint256 public state;
 
   bool public initialized;

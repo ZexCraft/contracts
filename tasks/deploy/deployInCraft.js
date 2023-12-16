@@ -2,10 +2,10 @@ const { types } = require("hardhat/config")
 const { networks } = require("../../networks")
 const fs = require("fs")
 
-task("deploy-pegocraft", "Deploys the PegoCraftNFT contract")
+task("deploy-pegocraft", "Deploys the InCraftNFT contract")
   .addOptionalParam("verify", "Set to true to verify contract", false, types.boolean)
   .setAction(async (taskArgs) => {
-    console.log(`Deploying PegoCraftNFT contract to ${network.name}`)
+    console.log(`Deploying InCraftNFT contract to ${network.name}`)
 
     const params = {
       relRegistry: networks[network.name].relRegistry,
@@ -19,7 +19,7 @@ task("deploy-pegocraft", "Deploys the PegoCraftNFT contract")
     console.log(params.relRegistry)
     console.log(params.registry)
     console.log(params.mintFee)
-    const pegoCraftContractFactory = await ethers.getContractFactory("PegoCraftNFT")
+    const pegoCraftContractFactory = await ethers.getContractFactory("InCraftNFT")
     const pegoCraftContract = await pegoCraftContractFactory.deploy(params.relRegistry, params.registry, params.mintFee)
 
     console.log(
@@ -30,7 +30,7 @@ task("deploy-pegocraft", "Deploys the PegoCraftNFT contract")
 
     await pegoCraftContract.deployTransaction.wait(networks[network.name].confirmations)
 
-    console.log("\nDeployed PegoCraftNFT contract to:", pegoCraftContract.address)
+    console.log("\nDeployed InCraftNFT contract to:", pegoCraftContract.address)
 
     if (network.name === "localFunctionsTestnet") {
       return
@@ -66,5 +66,5 @@ task("deploy-pegocraft", "Deploys the PegoCraftNFT contract")
       )
     }
 
-    console.log(`\PegoCraftNFT contract deployed to ${pegoCraftContract.address} on ${network.name}`)
+    console.log(`\InCraftNFT contract deployed to ${pegoCraftContract.address} on ${network.name}`)
   })

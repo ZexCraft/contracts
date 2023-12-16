@@ -1,14 +1,14 @@
 const { networks } = require("../../networks")
 
-task("deploy-relationship", "Deploys the PegoCraftRelationship contract")
+task("deploy-relationship", "Deploys the InCraftRelationship contract")
   .addOptionalParam("verify", "Set to true to verify contract", false, types.boolean)
   .setAction(async (taskArgs) => {
-    console.log(`Deploying PegoCraftRelationship contract to ${network.name}`)
+    console.log(`Deploying InCraftRelationship contract to ${network.name}`)
 
     console.log("\n__Compiling Contracts__")
     await run("compile")
 
-    const relationshipFactory = await ethers.getContractFactory("PegoCraftRelationship")
+    const relationshipFactory = await ethers.getContractFactory("InCraftRelationship")
     const relationship = await relationshipFactory.deploy()
 
     console.log(
@@ -19,7 +19,7 @@ task("deploy-relationship", "Deploys the PegoCraftRelationship contract")
 
     await relationship.deployTransaction.wait(networks[network.name].confirmations)
 
-    console.log("\nDeployed PegoCraftRelationship contract to:", relationship.address)
+    console.log("\nDeployed InCraftRelationship contract to:", relationship.address)
 
     if (network.name === "localFunctionsTestnet") {
       return
@@ -55,5 +55,5 @@ task("deploy-relationship", "Deploys the PegoCraftRelationship contract")
       )
     }
 
-    console.log(`\PegoCraftRelationship contract deployed to ${relationship.address} on ${network.name}`)
+    console.log(`\InCraftRelationship contract deployed to ${relationship.address} on ${network.name}`)
   })

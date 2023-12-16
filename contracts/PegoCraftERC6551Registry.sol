@@ -28,7 +28,6 @@ contract PegoCraftERC6551Registry is IERC6551Registry {
   }
 
   function _createAccount(uint256 chainId, address tokenContract, uint256 tokenId) internal returns (address) {
-    require(msg.sender == IERC721(tokenContract).ownerOf(tokenId), "Invalid owner");
     bytes memory code = _creationCode(i_implementation, chainId, tokenContract, tokenId, 1);
     address account_ = Create2.computeAddress(bytes32(uint256(1)), keccak256(code));
 

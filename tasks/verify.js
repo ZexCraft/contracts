@@ -9,13 +9,9 @@ task("verify-contract", "Verifies contract")
         'This command cannot be used on a local development chain.  Specify a valid network or simulate an Functions request locally with "npx hardhat functions-simulate".'
       )
     }
-    const params = {
-      router: networks[network.name].ccipRouter,
-      mintFee: networks.avalancheFuji.mintFee,
-      pegocraft: networks[network.name].pegocraftNft,
-    }
+    const pegoCraft = networks[network.name].pegoCraft
 
-    const constructorArguments = [params.router, params.mintFee, params.pegocraft]
+    const constructorArguments = [pegoCraft]
 
     console.log(`Verifying contract to ${taskArgs.contract}`)
 

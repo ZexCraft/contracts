@@ -32,7 +32,7 @@ contract PegoCraftRelationshipRegistry {
     address breedingAccount,
     address otherAccount,
     bytes memory otherAccountsignature
-  ) external onlyPegoCraftERC6551Account(otherAccount) returns (address) {
+  ) external returns (address) {
     NFT memory nft1 = _getNft(msg.sender);
     NFT memory nft2 = _getNft(otherAccount);
     return _createRelationship(nft1, nft2, breedingAccount, otherAccount, otherAccountsignature);

@@ -76,14 +76,14 @@ contract PegoCraftNFT is ERC721, ERC721URIStorage, Ownable {
     require(ICraftToken(craftToken).burnTokens(msg.sender, mintFee), "burn failed");
     _mint(msg.sender, tokenIdCounter);
     _setTokenURI(tokenIdCounter, tokenURI);
-    // account = IERC6551Registry(accountRegistry).createAccount(
-    //   address(0),
-    //   block.chainid,
-    //   address(this),
-    //   tokenIdCounter,
-    //   0,
-    //   ""
-    // );
+    account = IERC6551Registry(accountRegistry).createAccount(
+      address(0),
+      block.chainid,
+      address(this),
+      tokenIdCounter,
+      0,
+      ""
+    );
     rarity[tokenIdCounter] = uint256(
       keccak256(abi.encodePacked(block.number, block.timestamp, msg.sender, tokenIdCounter))
     );

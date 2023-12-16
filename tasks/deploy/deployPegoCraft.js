@@ -17,6 +17,7 @@ task("deploy-pegocraft", "Deploys the PegoCraftNFT contract")
     await run("compile")
 
     console.log(params.relRegistry)
+    console.log(params.registry)
     console.log(params.mintFee)
     const pegoCraftContractFactory = await ethers.getContractFactory("PegoCraftNFT")
     const pegoCraftContract = await pegoCraftContractFactory.deploy(params.relRegistry, params.registry, params.mintFee)

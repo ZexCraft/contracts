@@ -22,7 +22,6 @@ contract InCraftRelationshipRegistry {
   mapping(address => mapping(address => bool)) public pairs;
 
   address public inCraft;
-  address public craftToken;
 
   constructor(IERC6551Registry _accountRegistry, address _relationshipImplementation, uint256 _mintFee) {
     relationshipImplementation = _relationshipImplementation;
@@ -45,9 +44,8 @@ contract InCraftRelationshipRegistry {
   }
 
   function initialize(address _inCraft, address _craftToken) external onlyDev {
-    require(inCraft == address(0) && craftToken == address(0), "Already intialized");
+    require(inCraft == address(0), "Already intialized");
     inCraft = _inCraft;
-    craftToken = _craftToken;
   }
 
   function createRelationship(
@@ -68,14 +66,14 @@ contract InCraftRelationshipRegistry {
     address otherAccount,
     bytes memory otherAccountsignature
   ) internal returns (address) {
-    require(inCraft != address(0) && craftToken != address(0), "Not intialized");
+    require(inCraft != address(0), "Not intialized");
     require(pairs[breedingAccount][otherAccount] == false, "pair already exists");
     require(relationshipImplementation != address(0), "relationshipImplementation not set");
 
     address relationship = _deployProxy(relationshipImplementation, 1);
     require(relationshipExists[relationship] == false, "Relationship already exists");
 
-    IRelationship(relationship).initialize([breedingAccount, otherAccount], devWallet, mintFee, inCraft, craftToken);
+    IRelationship(relationship).initialize([breedingAccount, otherAccount], devWallet, mintFee, inCraft);
     relationshipExists[relationship] = true;
     pairs[breedingAccount][otherAccount] = true;
     pairs[otherAccount][breedingAccount] = true;

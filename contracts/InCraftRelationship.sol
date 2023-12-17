@@ -21,7 +21,6 @@ contract InCraftRelationship is IRelationship {
 
   address public inCraft;
   address public devWallet;
-  address public craftToken;
   uint256 public mintFee;
   bool public isInitialized;
 
@@ -42,14 +41,12 @@ contract InCraftRelationship is IRelationship {
     address[2] memory _nfts,
     address _devWallet,
     uint256 _mintFee,
-    address _inCraft,
-    address _craftToken
+    address _inCraft
   ) external onlyOnce {
     nfts = _nfts;
     inCraft = _inCraft;
     devWallet = _devWallet;
     mintFee = _mintFee;
-    craftToken = _craftToken;
     isInitialized = true;
   }
 
@@ -84,8 +81,6 @@ contract InCraftRelationship is IRelationship {
   function createBaby(bytes[2] memory signatures) external onlyDev {
     bytes32 dataHash = getSignData();
     require(verifySignature(nfts[0], dataHash, signatures[0]), "invalid signature");
-    require(ICraftToken(craftToken).balanceOf(address(this)) >= mintFee, "not enough fee");
-    ICraftToken(craftToken).transferFrom(address(this), inCraft, mintFee);
 
     (, address nft1TokenAddress, uint256 nft1TokenId) = IERC6551Account(payable(nfts[0])).token();
     (, address nft2TokenAddress, uint256 nft2TokenId) = IERC6551Account(payable(nfts[1])).token();

@@ -125,7 +125,7 @@ contract InCraftNFT is ERC721, ERC721URIStorage {
   ) external onlyRelationship returns (address account) {
     require(tx.origin == operator, "only dev owner");
     require(IERC20(craftToken).balanceOf(msg.sender) >= mintFee, "not enough fee");
-    require(ICraftToken(craftToken).transferFrom(msg.sender, address(this), mintFee), "burn failed");
+    require(ICraftToken(craftToken).transferFrom(msg.sender, address(this), mintFee), "transfer failed");
 
     _mint(msg.sender, tokenIdCounter);
     _setTokenURI(tokenIdCounter, tokenURI);

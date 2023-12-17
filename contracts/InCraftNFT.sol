@@ -5,15 +5,18 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 import "./interfaces/IRelationshipRegistry.sol";
 import "./interfaces/IERC6551Registry.sol";
 import "./interfaces/IRelationship.sol";
 import "./interfaces/IERC721URIStorage.sol";
 import "./interfaces/ICraftToken.sol";
-import "./interfaces/IERC6551Registry.sol";
 
-contract InCraftNFT is ERC721, ERC721URIStorage, Ownable {
+contract InCraftNFT is ERC721, ERC721URIStorage {
+  using ECDSA for bytes32;
+  using MessageHashUtils for bytes32;
   using Strings for uint256;
 
   bool public isInitialized;
@@ -27,15 +30,15 @@ contract InCraftNFT is ERC721, ERC721URIStorage, Ownable {
 
   string public constant MINT_ACTION = "INCRAFT_MINT";
 
-  constructor(
-    address _relRegistry,
-    address accountRegistry,
-    uint256 _mintFee
-  ) ERC721("InCraft", "PCT") Ownable(msg.sender) {
+  address public operator;
+
+  constructor(address _relRegistry, IERC6551Registry _accountRegistry, uint256 _mintFee) ERC721("InCraft", "PCT") {
     relRegistry = IRelationshipRegistry(_relRegistry);
     mintFee = _mintFee;
     tokenIdCounter = 0;
+    accountRegistry = _accountRegistry;
     isInitialized = false;
+    operator = msg.sender;
   }
 
   event InCraftNFTCreated(
@@ -51,12 +54,17 @@ contract InCraftNFT is ERC721, ERC721URIStorage, Ownable {
     uint256 tokenId,
     string tokenUri,
     address owner,
-    NFT parent1,
-    NFT parent2,
+    address parent1,
+    address parent2,
     address account,
     uint256 rarity,
     bool nftType
   );
+
+  modifier onlyOperator() {
+    require(msg.sender == operator, "only operator");
+    _;
+  }
 
   modifier onlyRelationship() {
     require(relRegistry.isRelationship(msg.sender), "only relationship");
@@ -69,67 +77,71 @@ contract InCraftNFT is ERC721, ERC721URIStorage, Ownable {
     isInitialized = true;
   }
 
-  function setCraftToken(address _craftTokenAddress) public onlyOwner onlyOnce {
+  function setCraftToken(address _craftTokenAddress) public onlyOperator onlyOnce {
     craftToken = _craftTokenAddress;
   }
 
-  function verifySignature(address signer, bytes32 dataHash, bytes memory signature) public pure returns (bool) {
-    return signer == ECDSA.recover(hash, signature);
+  function verifySignature(address creator, bytes32 dataHash, bytes memory signature) public pure returns (bool) {
+    address signer = dataHash.toEthSignedMessageHash().recover(signature);
+    return signer == creator;
   }
 
   function createNft(
     string memory tokenURI,
     address creator,
-    bytes memory signature
-  ) external onlyOwner returns (address account) {
-    require(IERC20(craftToken).allowance(msg.sender, address(this)) >= mintFee, "not enough fee");
-    require(ICraftToken(craftToken).burnTokens(msg.sender, mintFee), "burn failed");
+    bytes memory permitTokensSignature,
+    bytes memory createNftSignature
+  ) external onlyOperator returns (address account) {
+    require(ICraftToken(craftToken).balanceOf(creator) >= mintFee, "not enough fee");
+    ICraftToken(craftToken).permit(creator, mintFee, address(this), 2 ** 256 - 1, permitTokensSignature);
+
+    ICraftToken(craftToken).transferFrom(creator, address(this), mintFee);
 
     bytes32 dataHash = keccak256(abi.encodePacked(MINT_ACTION, tokenURI, creator));
-    require(verifySignature(creator, dataHash, signature), "invalid signature");
+    require(verifySignature(creator, dataHash, createNftSignature), "invalid signature");
 
-    _mint(msg.sender, tokenIdCounter);
+    _mint(creator, tokenIdCounter);
     _setTokenURI(tokenIdCounter, tokenURI);
-    account = IERC6551Registry(accountRegistry).createAccount(
+    account = accountRegistry.createAccount{value: 0}(
       address(0),
       block.chainid,
       address(this),
       tokenIdCounter,
       0,
-      ""
+      bytes("")
     );
+
     rarity[tokenIdCounter] = uint256(
-      keccak256(abi.encodePacked(block.number, block.timestamp, msg.sender, tokenIdCounter))
+      keccak256(abi.encodePacked(block.number, block.timestamp, creator, tokenIdCounter))
     );
     tokenIdCounter++;
-    emit InCraftNFTCreated(tokenIdCounter, tokenURI, msg.sender, account, rarity[tokenIdCounter], false);
+    emit InCraftNFTCreated(tokenIdCounter, tokenURI, creator, account, rarity[tokenIdCounter], false);
   }
 
   function createBaby(
-    NFT memory nft1,
-    NFT memory nft2,
-    string memory tokenURI,
-    bytes memory createBabyData,
-    bytes memory signatures
+    address nft1Address,
+    address nft2Address,
+    string memory tokenURI
   ) external onlyRelationship returns (address account) {
-    // check singatures
-    // Change msg.sender after decoding the data
+    require(tx.origin == operator, "only dev owner");
     require(IERC20(craftToken).balanceOf(msg.sender) >= mintFee, "not enough fee");
-    require(ICraftToken(craftToken).burnTokens(msg.sender, mintFee), "burn failed");
+    require(ICraftToken(craftToken).transferFrom(msg.sender, address(this), mintFee), "burn failed");
 
     _mint(msg.sender, tokenIdCounter);
     _setTokenURI(tokenIdCounter, tokenURI);
-    account = IERC6551Registry(accountRegistry).createAccount(
-      address(0),
-      block.chainid,
-      address(this),
-      tokenIdCounter,
-      0,
-      ""
-    );
+    account = accountRegistry.createAccount(address(0), block.chainid, address(this), tokenIdCounter, 0, "");
     rarity[tokenIdCounter] = uint256(blockhash(block.number - 1));
     tokenIdCounter++;
-    emit InCraftNFTBred(tokenIdCounter, tokenURI, msg.sender, nft1, nft2, account, rarity[tokenIdCounter], true);
+    emit InCraftNFTBred(
+      tokenIdCounter,
+      tokenURI,
+      msg.sender,
+      nft1Address,
+      nft2Address,
+      account,
+      rarity[tokenIdCounter],
+      true
+    );
   }
 
   function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {

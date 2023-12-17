@@ -6,18 +6,29 @@ import "./interfaces/IERC6551Registry.sol";
 import "./interfaces/IRelationship.sol";
 import "./interfaces/IERC6551Account.sol";
 import "./interfaces/IERC721URIStorage.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 contract InCraftRelationshipRegistry {
+  using ECDSA for bytes32;
+  using MessageHashUtils for bytes32;
   mapping(address => bool) public relationshipExists;
 
   IERC6551Registry public accountRegistry;
   address public relationshipImplementation;
+  uint256 public mintFee;
+  address public devWallet;
 
   mapping(address => mapping(address => bool)) public pairs;
 
-  constructor(IERC6551Registry _accountRegistry, address _relationshipImplementation) {
+  address public inCraft;
+  address public craftToken;
+
+  constructor(IERC6551Registry _accountRegistry, address _relationshipImplementation, uint256 _mintFee) {
     relationshipImplementation = _relationshipImplementation;
     accountRegistry = _accountRegistry;
+    devWallet = msg.sender;
+    mintFee = _mintFee;
   }
 
   event RelationshipCreated(address parent1, address parent2, address relationship);
@@ -28,33 +39,46 @@ contract InCraftRelationshipRegistry {
     _;
   }
 
+  modifier onlyDev() {
+    require(msg.sender == devWallet, "only dev");
+    _;
+  }
+
+  function initialize(address _inCraft, address _craftToken) external onlyDev {
+    require(inCraft == address(0) && craftToken == address(0), "Already intialized");
+    inCraft = _inCraft;
+    craftToken = _craftToken;
+  }
+
   function createRelationship(
-    address breedingAccount,
     address otherAccount,
     bytes memory otherAccountsignature
   ) external onlyInCraftERC6551Account(otherAccount) returns (address) {
-    NFT memory nft1 = _getNft(msg.sender);
-    NFT memory nft2 = _getNft(otherAccount);
-    return _createRelationship(nft1, nft2, breedingAccount, otherAccount, otherAccountsignature);
+    // check signatures
+    address nft2Owner = IERC6551Account(payable(otherAccount)).owner();
+    bytes32 messageHash = keccak256(abi.encodePacked(msg.sender, otherAccount));
+    address signer = messageHash.toEthSignedMessageHash().recover(otherAccountsignature);
+    require(signer == otherAccount, "Invalid signature");
+
+    return _createRelationship(msg.sender, otherAccount, otherAccountsignature);
   }
 
   function _createRelationship(
-    NFT memory nft1,
-    NFT memory nft2,
     address breedingAccount,
     address otherAccount,
     bytes memory otherAccountsignature
   ) internal returns (address) {
-    require(pairs[nft1.tokenAddress][nft2.tokenAddress] == false, "pair already exists");
+    require(inCraft != address(0) && craftToken != address(0), "Not intialized");
+    require(pairs[breedingAccount][otherAccount] == false, "pair already exists");
     require(relationshipImplementation != address(0), "relationshipImplementation not set");
-    // TODO: Verify otherAccountsignature with owner of the other NFT using owner() function of ERC6551
+
     address relationship = _deployProxy(relationshipImplementation, 1);
     require(relationshipExists[relationship] == false, "Relationship already exists");
 
-    IRelationship(relationship).initialize(nft1, nft2);
+    IRelationship(relationship).initialize([breedingAccount, otherAccount], devWallet, mintFee, inCraft, craftToken);
     relationshipExists[relationship] = true;
-    pairs[nft1.tokenAddress][nft2.tokenAddress] = true;
-    pairs[nft2.tokenAddress][nft1.tokenAddress] = true;
+    pairs[breedingAccount][otherAccount] = true;
+    pairs[otherAccount][breedingAccount] = true;
     emit RelationshipCreated(breedingAccount, otherAccount, relationship);
 
     return relationship;
@@ -76,11 +100,6 @@ contract InCraftRelationshipRegistry {
         hex"5af43d82803e903d91602b57fd5bf3",
         abi.encode(salt_)
       );
-  }
-
-  function _getNft(address account) internal view returns (NFT memory) {
-    (uint256 chainId, address nftAddress, uint256 tokenId) = IERC6551Account(payable(account)).token();
-    return NFT(nftAddress, tokenId, chainId);
   }
 
   function isRelationship(address _address) external view returns (bool) {

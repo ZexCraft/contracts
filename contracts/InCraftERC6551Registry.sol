@@ -34,7 +34,7 @@ contract InCraftERC6551Registry is IERC6551Registry {
     if (account_.code.length != 0) return account_;
 
     account_ = Create2.deploy(0, bytes32(uint256(1)), code);
-
+    accountExists[account_] = true;
     emit AccountCreated(account_, i_implementation, chainId, tokenContract, tokenId, uint256(1));
     return account_;
   }

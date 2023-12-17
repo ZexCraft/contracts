@@ -33,14 +33,15 @@ module.exports = {
   etherscan: {
     apiKey: {
       polygonMumbai: networks.polygonMumbai.verifyApiKey,
+      inEvmTestnet: networks.inEvmTestnet.verifyApiKey,
     },
     customChains: [
       {
-        network: "pegoMainnet",
-        chainId: 20201022,
+        network: "inEvmTestnet",
+        chainId: 1738,
         urls: {
-          apiURL: "https://scan.pego.network/api",
-          browserURL: "https://scan.pego.network/",
+          apiURL: "https://inevm.calderaexplorer.xyz/api",
+          browserURL: "https://inevm.calderaexplorer.xyz/",
         },
       },
     ],

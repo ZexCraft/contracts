@@ -2,7 +2,7 @@ const { types } = require("hardhat/config")
 const { networks } = require("../../networks")
 const fs = require("fs")
 
-task("deploy-pegocraft", "Deploys the InCraftNFT contract")
+task("deploy-incraft", "Deploys the InCraftNFT contract")
   .addOptionalParam("verify", "Set to true to verify contract", false, types.boolean)
   .setAction(async (taskArgs) => {
     console.log(`Deploying InCraftNFT contract to ${network.name}`)
@@ -19,18 +19,18 @@ task("deploy-pegocraft", "Deploys the InCraftNFT contract")
     console.log(params.relRegistry)
     console.log(params.registry)
     console.log(params.mintFee)
-    const pegoCraftContractFactory = await ethers.getContractFactory("InCraftNFT")
-    const pegoCraftContract = await pegoCraftContractFactory.deploy(params.relRegistry, params.registry, params.mintFee)
+    const inCraftContractFactory = await ethers.getContractFactory("InCraftNFT")
+    const inCraftContract = await inCraftContractFactory.deploy(params.relRegistry, params.registry, params.mintFee)
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
-        pegoCraftContract.deployTransaction.hash
+        inCraftContract.deployTransaction.hash
       } to be confirmed...`
     )
 
-    await pegoCraftContract.deployTransaction.wait(networks[network.name].confirmations)
+    await inCraftContract.deployTransaction.wait(networks[network.name].confirmations)
 
-    console.log("\nDeployed InCraftNFT contract to:", pegoCraftContract.address)
+    console.log("\nDeployed InCraftNFT contract to:", inCraftContract.address)
 
     if (network.name === "localFunctionsTestnet") {
       return
@@ -46,7 +46,7 @@ task("deploy-pegocraft", "Deploys the InCraftNFT contract")
       try {
         console.log("\nVerifying contract...")
         await run("verify:verify", {
-          address: pegoCraftContract.address,
+          address: inCraftContract.address,
           constructorArguments: [params.relRegistry, params.registry, params.mintFee],
         })
         console.log("Contract verified")
@@ -66,5 +66,5 @@ task("deploy-pegocraft", "Deploys the InCraftNFT contract")
       )
     }
 
-    console.log(`\InCraftNFT contract deployed to ${pegoCraftContract.address} on ${network.name}`)
+    console.log(`\InCraftNFT contract deployed to ${inCraftContract.address} on ${network.name}`)
   })

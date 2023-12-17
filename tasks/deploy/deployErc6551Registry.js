@@ -12,18 +12,18 @@ task("deploy-registry", "Deploys the InCraftERC6551Registry contract")
       implementation: networks[network.name].implementation,
     }
     console.log(params.implementation)
-    const pegoCraftContractFactory = await ethers.getContractFactory("InCraftERC6551Registry")
-    const pegoCraftContract = await pegoCraftContractFactory.deploy(params.implementation)
+    const inCraftContractFactory = await ethers.getContractFactory("InCraftERC6551Registry")
+    const inCraftContract = await inCraftContractFactory.deploy(params.implementation)
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
-        pegoCraftContract.deployTransaction.hash
+        inCraftContract.deployTransaction.hash
       } to be confirmed...`
     )
 
-    await pegoCraftContract.deployTransaction.wait(networks[network.name].confirmations)
+    await inCraftContract.deployTransaction.wait(networks[network.name].confirmations)
 
-    console.log("\nDeployed InCraftERC6551Registry contract to:", pegoCraftContract.address)
+    console.log("\nDeployed InCraftERC6551Registry contract to:", inCraftContract.address)
 
     if (network.name === "localFunctionsTestnet") {
       return
@@ -39,7 +39,7 @@ task("deploy-registry", "Deploys the InCraftERC6551Registry contract")
       try {
         console.log("\nVerifying contract...")
         await run("verify:verify", {
-          address: pegoCraftContract.address,
+          address: inCraftContract.address,
           constructorArguments: [params.implementation],
         })
         console.log("Contract verified")
@@ -59,5 +59,5 @@ task("deploy-registry", "Deploys the InCraftERC6551Registry contract")
       )
     }
 
-    console.log(`\InCraftERC6551Registry contract deployed to ${pegoCraftContract.address} on ${network.name}`)
+    console.log(`\InCraftERC6551Registry contract deployed to ${inCraftContract.address} on ${network.name}`)
   })

@@ -11,11 +11,16 @@ task("deploy-relationship-registry", "Deploys the InCraftRelationshipRegistry co
     const params = {
       accountRegistry: networks[network.name].registry,
       relImplementation: networks[network.name].relImplementation,
+      mintFee: networks[network.name].mintFee,
     }
     console.log(params.accountRegistry)
     console.log(params.relImplementation)
     const relationshipFactory = await ethers.getContractFactory("InCraftRelationshipRegistry")
-    const relationshipRegistry = await relationshipFactory.deploy(params.accountRegistry, params.relImplementation)
+    const relationshipRegistry = await relationshipFactory.deploy(
+      params.accountRegistry,
+      params.relImplementation,
+      params.mintFee
+    )
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
@@ -42,7 +47,7 @@ task("deploy-relationship-registry", "Deploys the InCraftRelationshipRegistry co
         console.log("\nVerifying contract...")
         await run("verify:verify", {
           address: relationshipRegistry.address,
-          constructorArguments: [params.accountRegistry, params.relImplementation],
+          constructorArguments: [params.accountRegistry, params.relImplementation, params.mintFee],
         })
         console.log("Contract verified")
       } catch (error) {

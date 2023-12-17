@@ -57,8 +57,8 @@ contract InCraftRelationship is IRelationship {
     uint8 operation,
     bytes[2] memory signatures
   ) external payable virtual returns (bytes memory result) {
-    // TODO: Check if both the signatures are valid
-
+    require(verifySignature(nfts[0], keccak256(data), signatures[0]), "invalid signature 1");
+    require(verifySignature(nfts[1], keccak256(data), signatures[1]), "invalid signature 2");
     require(to != inCraft, "Only dev wallet");
     require(operation == 0, "Only call operations are supported");
     ++state;

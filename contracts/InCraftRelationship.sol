@@ -78,16 +78,14 @@ contract InCraftRelationship is IRelationship {
     return signer == creator;
   }
 
-  function createBaby(bytes[2] memory signatures) external onlyDev {
+  function createBaby(string memory tokenURI, bytes[2] memory signatures) external onlyDev returns (address account) {
     bytes32 dataHash = getSignData();
     require(verifySignature(nfts[0], dataHash, signatures[0]), "invalid signature");
+    require(verifySignature(nfts[1], dataHash, signatures[1]), "invalid signature");
 
-    (, address nft1TokenAddress, uint256 nft1TokenId) = IERC6551Account(payable(nfts[0])).token();
-    (, address nft2TokenAddress, uint256 nft2TokenId) = IERC6551Account(payable(nfts[1])).token();
     nonce++;
-    string memory nft1TokenUri = INFT(nft1TokenAddress).tokenURI(nft1TokenId);
-    string memory nft2TokenUri = INFT(nft2TokenAddress).tokenURI(nft2TokenId);
-    IInCraftNFT(inCraft).createBaby(nfts[0], nfts[1], nft1TokenUri, nft2TokenUri);
+
+    account = IInCraftNFT(inCraft).createBaby(nfts[0], nfts[1], tokenURI);
   }
 
   function getSignData() public view returns (bytes32) {

@@ -114,8 +114,8 @@ contract InCraftNFT is ERC721, ERC721URIStorage {
     rarity[tokenIdCounter] = uint256(
       keccak256(abi.encodePacked(block.number, block.timestamp, creator, tokenIdCounter))
     );
-    tokenIdCounter++;
     emit InCraftNFTCreated(tokenIdCounter, tokenURI, creator, account, rarity[tokenIdCounter], false);
+    tokenIdCounter++;
   }
 
   function createBaby(

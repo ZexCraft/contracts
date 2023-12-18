@@ -39,7 +39,7 @@ const networks = {
     relRegistry: "0x4393eD225A2F48C27eA6CeBec139190cb8EA8A5F",
     inCraft: "0x9FafD4cB45410a931b538F1D97EFCC28b147E449",
     mintFee: "100000000000000000",
-    craftToken: "0xD1dfbEd2a946a81324ed59D4C1396BB65aBa99B0",
+    craftToken: "0x5494ee4a6d7d087debafc2c16340cce93f763d38",
   },
   inEvmTestnet: {
     url: "https://inevm-rpc.caldera.dev/",

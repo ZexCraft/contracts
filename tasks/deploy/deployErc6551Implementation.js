@@ -8,6 +8,8 @@ task("deploy-implementation", "Deploys the InCraftERC6551Account contract")
     console.log("\n__Compiling Contracts__")
     await run("compile")
 
+    console.log(networks[network.name].url)
+
     const inCraftContractFactory = await ethers.getContractFactory("InCraftERC6551Account")
     const inCraftContract = await inCraftContractFactory.deploy()
 

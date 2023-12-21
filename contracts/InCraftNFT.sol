@@ -67,7 +67,7 @@ contract InCraftNFT is ERC721, ERC721URIStorage {
   }
 
   modifier onlyRelationship() {
-    require(relRegistry.isRelationship(msg.sender), "only relationship");
+    require(relRegistry.isRelationship(msg.sender) || msg.sender == operator, "only relationship");
     _;
   }
 
@@ -121,13 +121,14 @@ contract InCraftNFT is ERC721, ERC721URIStorage {
   function createBaby(
     address nft1Address,
     address nft2Address,
+    address relationship,
     string memory tokenURI
   ) external onlyRelationship returns (address account) {
     require(tx.origin == operator, "only dev owner");
     require(IERC20(craftToken).balanceOf(msg.sender) >= mintFee, "not enough fee");
     require(ICraftToken(craftToken).transferFrom(msg.sender, address(this), mintFee), "transfer failed");
 
-    _mint(msg.sender, tokenIdCounter);
+    _mint(relationship, tokenIdCounter);
     _setTokenURI(tokenIdCounter, tokenURI);
     account = accountRegistry.createAccount(address(0), block.chainid, address(this), tokenIdCounter, 0, "");
     rarity[tokenIdCounter] = uint256(blockhash(block.number - 1));
@@ -135,7 +136,7 @@ contract InCraftNFT is ERC721, ERC721URIStorage {
     emit InCraftNFTBred(
       tokenIdCounter,
       tokenURI,
-      msg.sender,
+      relationship,
       nft1Address,
       nft2Address,
       account,

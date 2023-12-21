@@ -16,4 +16,7 @@ exports.deployTestNFT = require("./deployTestNFT.js")
 5. InCraft - npx hardhat deploy-incraft --network polygonMumbai --verify true
 6. CraftToken - npx hardhat deploy-craft-token --network polygonMumbai --verify true
 
+Call setCraftToken in InCraft
+Call initialize in RelRegistry
+
 */

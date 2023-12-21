@@ -85,7 +85,7 @@ contract InCraftRelationship is IRelationship {
 
     nonce++;
 
-    account = IInCraftNFT(inCraft).createBaby(nfts[0], nfts[1], tokenURI);
+    account = IInCraftNFT(inCraft).createBaby(nfts[0], nfts[1], address(this), tokenURI);
   }
 
   function getSignData() public view returns (bytes32) {

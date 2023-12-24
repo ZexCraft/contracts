@@ -33,15 +33,24 @@ module.exports = {
   etherscan: {
     apiKey: {
       polygonMumbai: networks.polygonMumbai.verifyApiKey,
-      inEvmTestnet: networks.inEvmTestnet.verifyApiKey,
+      viction: networks.viction.verifyApiKey,
+      victionTestnet: networks.victionTestnet.verifyApiKey,
     },
     customChains: [
       {
-        network: "inEvmTestnet",
-        chainId: 1738,
+        network: "viction",
+        chainId: 88,
         urls: {
-          apiURL: "https://inevm.calderaexplorer.xyz/api",
-          browserURL: "https://inevm.calderaexplorer.xyz/",
+          apiURL: "https://www.vicscan.xyz/api/contract/hardhat/verify",
+          browserURL: "https://vicscan.xyz",
+        },
+      },
+      {
+        network: "victionTestnet",
+        chainId: 89,
+        urls: {
+          apiURL: "https://www.testnet.vicscan.xyz/api/contract/hardhat/verify",
+          browserURL: "https://testnet.vicscan.xyz",
         },
       },
     ],

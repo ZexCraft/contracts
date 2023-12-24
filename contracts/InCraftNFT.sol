@@ -67,7 +67,7 @@ contract InCraftNFT is ERC721, ERC721URIStorage {
   }
 
   modifier onlyRelationship() {
-    require(relRegistry.isRelationship(msg.sender) || msg.sender == operator, "only relationship");
+    require(relRegistry.isRelationship(msg.sender), "only relationship");
     _;
   }
 
@@ -132,7 +132,7 @@ contract InCraftNFT is ERC721, ERC721URIStorage {
     _setTokenURI(tokenIdCounter, tokenURI);
     account = accountRegistry.createAccount(address(0), block.chainid, address(this), tokenIdCounter, 0, "");
     rarity[tokenIdCounter] = uint256(blockhash(block.number - 1));
-    tokenIdCounter++;
+
     emit InCraftNFTBred(
       tokenIdCounter,
       tokenURI,
@@ -143,6 +143,8 @@ contract InCraftNFT is ERC721, ERC721URIStorage {
       rarity[tokenIdCounter],
       true
     );
+
+    tokenIdCounter++;
   }
 
   function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {

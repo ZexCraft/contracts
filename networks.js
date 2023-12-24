@@ -9,7 +9,7 @@ const isTestEnvironment = npmCommand == "test" || npmCommand == "test:unit"
 const PRIVATE_KEY = process.env.PRIVATE_KEY
 
 // TODO @dev - set this to run the accept.js task.
-const SECOND_PRIVATE_KEY = process.env.SECOND_PRIVATE_KEY
+const SECOND_PRIVATE_KEY = process.env.PRIVATE_KEY_2
 
 if (!isTestEnvironment && !PRIVATE_KEY) {
   throw Error("Set the PRIVATE_KEY environment variable with your EVM wallet private key")
@@ -17,9 +17,11 @@ if (!isTestEnvironment && !PRIVATE_KEY) {
 
 const accounts = []
 if (PRIVATE_KEY) {
+  console.log("PRIVATE KEY 1 SET")
   accounts.push(PRIVATE_KEY)
 }
 if (SECOND_PRIVATE_KEY) {
+  console.log("PRIVATE KEY 2 SET")
   accounts.push(SECOND_PRIVATE_KEY)
 }
 
@@ -41,22 +43,39 @@ const networks = {
     mintFee: "100000000000000000",
     craftToken: "0xf514E2910c6f78c1Dc6B765A0d06adfd75C8450c",
   },
-  inEvmTestnet: {
-    url: "https://inevm-rpc.caldera.dev/",
-    gasPrice: 40_000_000_00,
+  victionTestnet: {
+    url: "https://rpc-testnet.viction.xyz",
+    gasPrice: 400_000_000,
     nonce: undefined,
     accounts,
-    verifyApiKey: process.env.POLYGONSCAN_API_KEY || "UNSET",
-    chainId: 1738,
-    confirmations: 2,
-    nativeCurrencySymbol: "INJ",
-    implementation: "0x16CBC6Cb38D19B73A3b545109c70b2031d20EA37",
-    registry: "0xd37ca03a13bD2725306Fec4071855EE556037e2e",
-    relImplementation: "0x4ab8f50796b059aE5C8b8534afC6bb4c84912ff6",
-    relRegistry: "0x7125e097a72cCf547ED6e9e98bCc09BE3AC61997",
-    inCraft: "0x50751BD8d7b0a84c422DE96A56426a370F31a42D",
+    verifyApiKey: "tomoscan2023",
+    chainId: 89,
+    confirmations: DEFAULT_VERIFICATION_BLOCK_CONFIRMATIONS,
+    nativeCurrencySymbol: "tVIC",
+    implementation: "",
+    registry: "",
+    relImplementation: "",
+    relRegistry: "",
+    inCraft: "",
     mintFee: "100000000000000000",
-    craftToken: "0x08AC2b69feB202b34aD7c65E5Ac876E901CA6216",
+    craftToken: "",
+  },
+  viction: {
+    url: "https://rpc.viction.xyz",
+    gasPrice: 400_000_000,
+    nonce: undefined,
+    accounts,
+    verifyApiKey: "tomoscan2023",
+    chainId: 88,
+    confirmations: DEFAULT_VERIFICATION_BLOCK_CONFIRMATIONS,
+    nativeCurrencySymbol: "VIC",
+    implementation: "",
+    registry: "",
+    relImplementation: "",
+    relRegistry: "",
+    inCraft: "",
+    mintFee: "100000000000000000",
+    craftToken: "",
   },
 }
 

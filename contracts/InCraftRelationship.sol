@@ -13,18 +13,18 @@ import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 contract InCraftRelationship is IRelationship {
   using ECDSA for bytes32;
   using MessageHashUtils for bytes32;
+
   uint256 public state;
-
   uint256 public nonce;
-
   address[2] public nfts;
 
   address public inCraft;
   address public devWallet;
+  ICraftToken public craftToken;
   uint256 public mintFee;
   bool public isInitialized;
 
-  string public constant MINT_ACTION = "INCRAFT_MINT";
+  string public constant INCRAFT_BREED = "INCRAFT_BREED";
 
   modifier onlyOnce() {
     require(!isInitialized, "already initialized");
@@ -40,6 +40,7 @@ contract InCraftRelationship is IRelationship {
   function initialize(
     address[2] memory _nfts,
     address _devWallet,
+    address _craftToken,
     uint256 _mintFee,
     address _inCraft
   ) external onlyOnce {
@@ -47,6 +48,7 @@ contract InCraftRelationship is IRelationship {
     inCraft = _inCraft;
     devWallet = _devWallet;
     mintFee = _mintFee;
+    craftToken = ICraftToken(_craftToken);
     isInitialized = true;
   }
 
@@ -73,23 +75,25 @@ contract InCraftRelationship is IRelationship {
     }
   }
 
-  function verifySignature(address creator, bytes32 dataHash, bytes memory signature) public pure returns (bool) {
+  function verifySignature(address nftAccount, bytes32 dataHash, bytes memory signature) public view returns (bool) {
     address signer = dataHash.toEthSignedMessageHash().recover(signature);
-    return signer == creator;
+    return signer == IERC6551Account(payable(nftAccount)).owner();
   }
 
   function createBaby(string memory tokenURI, bytes[2] memory signatures) external onlyDev returns (address account) {
     bytes32 dataHash = getSignData();
-    require(verifySignature(nfts[0], dataHash, signatures[0]), "invalid signature");
-    require(verifySignature(nfts[1], dataHash, signatures[1]), "invalid signature");
+    require(verifySignature(nfts[0], dataHash, signatures[0]), "invalid nft1 sig");
+    require(verifySignature(nfts[1], dataHash, signatures[1]), "invalid nft2 sig");
+    require(craftToken.balanceOf(address(this)) >= mintFee, "insufficient fee");
 
+    craftToken.approve(inCraft, mintFee);
+    account = IInCraftNFT(inCraft).createBaby(nfts[0], nfts[1], address(this), tokenURI);
     nonce++;
 
-    account = IInCraftNFT(inCraft).createBaby(nfts[0], nfts[1], address(this), tokenURI);
   }
 
   function getSignData() public view returns (bytes32) {
-    return keccak256(abi.encodePacked(MINT_ACTION, address(this), nonce));
+    return keccak256(abi.encodePacked(INCRAFT_BREED, address(this), nonce));
   }
 
   function getParents() external view returns (address, address) {

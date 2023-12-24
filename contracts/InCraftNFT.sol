@@ -46,8 +46,7 @@ contract InCraftNFT is ERC721, ERC721URIStorage {
     string tokenUri,
     address owner,
     address account,
-    uint256 rarity,
-    bool nftType
+    uint256 rarity
   );
 
   event InCraftNFTBred(
@@ -57,8 +56,7 @@ contract InCraftNFT is ERC721, ERC721URIStorage {
     address parent1,
     address parent2,
     address account,
-    uint256 rarity,
-    bool nftType
+    uint256 rarity
   );
 
   modifier onlyOperator() {
@@ -117,7 +115,7 @@ contract InCraftNFT is ERC721, ERC721URIStorage {
     rarity[tokenIdCounter] = uint256(
       keccak256(abi.encodePacked(block.number, block.timestamp, creator, tokenIdCounter))
     )%100;
-    emit InCraftNFTCreated(tokenIdCounter, tokenURI, creator, account, rarity[tokenIdCounter], false);
+    emit InCraftNFTCreated(tokenIdCounter, tokenURI, creator, account, rarity[tokenIdCounter]);
     tokenIdCounter++;
   }
 
@@ -128,13 +126,14 @@ contract InCraftNFT is ERC721, ERC721URIStorage {
     string memory tokenURI
   ) external onlyRelationship returns (address account) {
     require(tx.origin == operator, "only dev owner");
-    require(IERC20(craftToken).balanceOf(msg.sender) >= mintFee, "not enough fee");
     require(ICraftToken(craftToken).transferFrom(msg.sender, address(this), mintFee), "transfer failed");
 
     _mint(relationship, tokenIdCounter);
     _setTokenURI(tokenIdCounter, tokenURI);
     account = accountRegistry.createAccount(address(0), block.chainid, address(this), tokenIdCounter, 0, "");
-    rarity[tokenIdCounter] = uint256(blockhash(block.number - 1));
+    rarity[tokenIdCounter] = uint256(
+      keccak256(abi.encodePacked(block.number, block.timestamp, nft1Address, nft2Address))
+    )%100;
 
     emit InCraftNFTBred(
       tokenIdCounter,
@@ -143,8 +142,7 @@ contract InCraftNFT is ERC721, ERC721URIStorage {
       nft1Address,
       nft2Address,
       account,
-      rarity[tokenIdCounter],
-      true
+      rarity[tokenIdCounter]
     );
 
     tokenIdCounter++;

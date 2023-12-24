@@ -12,12 +12,15 @@ import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 contract InCraftRelationshipRegistry {
   using ECDSA for bytes32;
   using MessageHashUtils for bytes32;
+  uint256 public nonce;
   mapping(address => bool) public relationshipExists;
 
   IERC6551Registry public accountRegistry;
   address public relationshipImplementation;
   uint256 public mintFee;
   address public devWallet;
+  address public craftToken;
+  string public constant INCRAFT_CREATE_RELATIONSHIP="INCRAFT_CREATE_RELATIONSHIP";
 
   mapping(address => mapping(address => bool)) public pairs;
 
@@ -46,39 +49,38 @@ contract InCraftRelationshipRegistry {
   function initialize(address _inCraft, address _craftToken) external onlyDev {
     require(inCraft == address(0), "Already intialized");
     inCraft = _inCraft;
+    craftToken = _craftToken;
   }
 
   function createRelationship(
     address otherAccount,
     bytes memory otherAccountsignature
   ) external onlyInCraftERC6551Account(otherAccount) returns (address) {
-    // check signatures
     address nft2Owner = IERC6551Account(payable(otherAccount)).owner();
-    bytes32 messageHash = keccak256(abi.encodePacked(msg.sender, otherAccount));
+    bytes32 messageHash = keccak256(abi.encodePacked(INCRAFT_CREATE_RELATIONSHIP,msg.sender, otherAccount));
     address signer = messageHash.toEthSignedMessageHash().recover(otherAccountsignature);
-    require(signer == otherAccount, "Invalid signature");
+    require(signer == nft2Owner, "Invalid signature");
 
-    return _createRelationship(msg.sender, otherAccount, otherAccountsignature);
+    return _createRelationship(msg.sender, otherAccount);
   }
 
   function _createRelationship(
     address breedingAccount,
-    address otherAccount,
-    bytes memory otherAccountsignature
+    address otherAccount
   ) internal returns (address) {
     require(inCraft != address(0), "Not intialized");
     require(pairs[breedingAccount][otherAccount] == false, "pair already exists");
-    require(relationshipImplementation != address(0), "relationshipImplementation not set");
+    require(relationshipImplementation != address(0), "impl not set");
 
-    address relationship = _deployProxy(relationshipImplementation, 1);
+    address relationship = _deployProxy(relationshipImplementation, nonce);
     require(relationshipExists[relationship] == false, "Relationship already exists");
 
-    IRelationship(relationship).initialize([breedingAccount, otherAccount], devWallet, mintFee, inCraft);
+    IRelationship(relationship).initialize([breedingAccount, otherAccount], devWallet, craftToken, mintFee, inCraft);
     relationshipExists[relationship] = true;
     pairs[breedingAccount][otherAccount] = true;
     pairs[otherAccount][breedingAccount] = true;
     emit RelationshipCreated(breedingAccount, otherAccount, relationship);
-
+    nonce++;
     return relationship;
   }
 
@@ -98,6 +100,17 @@ contract InCraftRelationshipRegistry {
         hex"5af43d82803e903d91602b57fd5bf3",
         abi.encode(salt_)
       );
+  }
+
+  function account(
+    uint256 salt
+  ) external view returns (address) {
+    return _account(salt);
+  }
+
+  function _account(uint256 _nonce) internal view returns (address) {
+    bytes memory code = _creationCode(relationshipImplementation, _nonce);
+    return Create2.computeAddress(bytes32(_nonce), keccak256(code));
   }
 
   function isRelationship(address _address) external view returns (bool) {

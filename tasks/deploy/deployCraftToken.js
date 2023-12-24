@@ -1,30 +1,25 @@
 const { networks } = require("../../networks")
 
-task("deploy-basechain", "Deploys the ZexCraftBaseChain contract")
+task("deploy-craft-token", "Deploys the CraftToken contract")
   .addOptionalParam("verify", "Set to true to verify contract", false, types.boolean)
   .setAction(async (taskArgs) => {
-    console.log(`Deploying ZexCraftBaseChain contract to ${network.name}`)
+    console.log(`Deploying CraftToken contract to ${network.name}`)
 
     console.log("\n__Compiling Contracts__")
     await run("compile")
-
-    const params = {
-      router: networks.avalancheFuji.ccipRouter,
-      mintFee: networks.avalancheFuji.mintFee,
-    }
-
-    const baseChainContractFactory = await ethers.getContractFactory("ZexCraftBaseChain")
-    const baseChainContract = await baseChainContractFactory.deploy(params.router, params.mintFee)
+    const inCraft = networks[network.name].inCraft
+    const inCraftContractFactory = await ethers.getContractFactory("CraftToken")
+    const inCraftContract = await inCraftContractFactory.deploy(inCraft)
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
-        baseChainContract.deployTransaction.hash
+        inCraftContract.deployTransaction.hash
       } to be confirmed...`
     )
 
-    await baseChainContract.deployTransaction.wait(networks[network.name].confirmations)
+    await inCraftContract.deployTransaction.wait(networks[network.name].confirmations)
 
-    console.log("\nDeployed ZexCraftBaseChain contract to:", baseChainContract.address)
+    console.log("\nDeployed CraftToken contract to:", inCraftContract.address)
 
     if (network.name === "localFunctionsTestnet") {
       return
@@ -40,8 +35,8 @@ task("deploy-basechain", "Deploys the ZexCraftBaseChain contract")
       try {
         console.log("\nVerifying contract...")
         await run("verify:verify", {
-          address: baseChainContract.address,
-          constructorArguments: [params.router, params.mintFee],
+          address: inCraftContract.address,
+          constructorArguments: [inCraft],
         })
         console.log("Contract verified")
       } catch (error) {
@@ -60,5 +55,5 @@ task("deploy-basechain", "Deploys the ZexCraftBaseChain contract")
       )
     }
 
-    console.log(`\n ZexCraftBaseChain contract deployed to ${baseChainContract.address} on ${network.name}`)
+    console.log(`\n CraftToken contract deployed to ${inCraftContract.address} on ${network.name}`)
   })

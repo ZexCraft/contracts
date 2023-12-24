@@ -1,21 +1,15 @@
 const { networks } = require("../../networks")
 
-task("deploy-relationship", "Deploys the ZexCraftRelationship contract")
+task("deploy-relationship", "Deploys the InCraftRelationship contract")
   .addOptionalParam("verify", "Set to true to verify contract", false, types.boolean)
   .setAction(async (taskArgs) => {
-    console.log(`Deploying ZexCraftRelationship contract to ${network.name}`)
+    console.log(`Deploying InCraftRelationship contract to ${network.name}`)
 
     console.log("\n__Compiling Contracts__")
     await run("compile")
 
-    const params = {
-      router: networks[network.name].ccipRouter,
-      mintFee: networks.avalancheFuji.mintFee,
-      zexcraft: networks[network.name].zexcraftNft,
-    }
-
-    const relationshipFactory = await ethers.getContractFactory("ZexCraftRelationship")
-    const relationship = await relationshipFactory.deploy(params.router, params.mintFee, params.zexcraft)
+    const relationshipFactory = await ethers.getContractFactory("InCraftRelationship")
+    const relationship = await relationshipFactory.deploy()
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
@@ -25,7 +19,7 @@ task("deploy-relationship", "Deploys the ZexCraftRelationship contract")
 
     await relationship.deployTransaction.wait(networks[network.name].confirmations)
 
-    console.log("\nDeployed ZexCraftRelationship contract to:", relationship.address)
+    console.log("\nDeployed InCraftRelationship contract to:", relationship.address)
 
     if (network.name === "localFunctionsTestnet") {
       return
@@ -42,7 +36,7 @@ task("deploy-relationship", "Deploys the ZexCraftRelationship contract")
         console.log("\nVerifying contract...")
         await run("verify:verify", {
           address: relationship.address,
-          constructorArguments: [params.router, params.mintFee, params.zexcraft],
+          constructorArguments: [],
         })
         console.log("Contract verified")
       } catch (error) {
@@ -61,5 +55,5 @@ task("deploy-relationship", "Deploys the ZexCraftRelationship contract")
       )
     }
 
-    console.log(`\ZexCraftRelationship contract deployed to ${relationship.address} on ${network.name}`)
+    console.log(`\InCraftRelationship contract deployed to ${relationship.address} on ${network.name}`)
   })

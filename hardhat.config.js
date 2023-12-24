@@ -15,7 +15,6 @@ const SOLC_SETTINGS = {
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
-  defaultNetwork: "localFunctionsTestnet",
   solidity: {
     compilers: [
       {
@@ -23,19 +22,7 @@ module.exports = {
         settings: SOLC_SETTINGS,
       },
       {
-        version: "0.8.7",
-        settings: SOLC_SETTINGS,
-      },
-      {
-        version: "0.7.0",
-        settings: SOLC_SETTINGS,
-      },
-      {
-        version: "0.6.6",
-        settings: SOLC_SETTINGS,
-      },
-      {
-        version: "0.4.24",
+        version: "0.8.20",
         settings: SOLC_SETTINGS,
       },
     ],
@@ -45,20 +32,16 @@ module.exports = {
   },
   etherscan: {
     apiKey: {
-      sepolia: networks.ethereumSepolia.verifyApiKey,
       polygonMumbai: networks.polygonMumbai.verifyApiKey,
-      avalancheFujiTestnet: networks.avalancheFuji.verifyApiKey,
-      bscTestnet: networks.binanceTestnet.verifyApiKey,
-      optimisticGoerli: networks.baseGoerliTestnet.verifyApiKey,
-      baseGoerli: networks.baseGoerliTestnet.verifyApiKey,
+      inEvmTestnet: networks.inEvmTestnet.verifyApiKey,
     },
     customChains: [
       {
-        network: "baseGoerli",
-        chainId: 84531,
+        network: "inEvmTestnet",
+        chainId: 1738,
         urls: {
-          apiURL: "https://api-goerli.basescan.org/api",
-          browserURL: "https://goerli.basescan.org/",
+          apiURL: "https://inevm.calderaexplorer.xyz/api",
+          browserURL: "https://inevm.calderaexplorer.xyz/",
         },
       },
     ],

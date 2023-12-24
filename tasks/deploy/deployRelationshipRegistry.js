@@ -1,19 +1,26 @@
 const { networks } = require("../../networks")
 
-task("deploy-relationship-registry", "Deploys the ZexCraftRelationshipRegistry contract")
+task("deploy-relationship-registry", "Deploys the InCraftRelationshipRegistry contract")
   .addOptionalParam("verify", "Set to true to verify contract", false, types.boolean)
   .setAction(async (taskArgs) => {
-    console.log(`Deploying ZexCraftRelationshipRegistry contract to ${network.name}`)
+    console.log(`Deploying InCraftRelationshipRegistry contract to ${network.name}`)
 
     console.log("\n__Compiling Contracts__")
     await run("compile")
 
     const params = {
-      accountRegistry: networks[network.name].accountRegistry,
-      ccipRouter: networks[network.name].ccipRouter,
+      accountRegistry: networks[network.name].registry,
+      relImplementation: networks[network.name].relImplementation,
+      mintFee: networks[network.name].mintFee,
     }
-    const relationshipFactory = await ethers.getContractFactory("ZexCraftRelationshipRegistry")
-    const relationshipRegistry = await relationshipFactory.deploy(params.accountRegistry, params.ccipRouter)
+    console.log(params.accountRegistry)
+    console.log(params.relImplementation)
+    const relationshipFactory = await ethers.getContractFactory("InCraftRelationshipRegistry")
+    const relationshipRegistry = await relationshipFactory.deploy(
+      params.accountRegistry,
+      params.relImplementation,
+      params.mintFee
+    )
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
@@ -23,7 +30,7 @@ task("deploy-relationship-registry", "Deploys the ZexCraftRelationshipRegistry c
 
     await relationshipRegistry.deployTransaction.wait(networks[network.name].confirmations)
 
-    console.log("\nDeployed ZexCraftRelationshipRegistry contract to:", relationshipRegistry.address)
+    console.log("\nDeployed InCraftRelationshipRegistry contract to:", relationshipRegistry.address)
 
     if (network.name === "localFunctionsTestnet") {
       return
@@ -40,7 +47,7 @@ task("deploy-relationship-registry", "Deploys the ZexCraftRelationshipRegistry c
         console.log("\nVerifying contract...")
         await run("verify:verify", {
           address: relationshipRegistry.address,
-          constructorArguments: [params.accountRegistry, params.ccipRouter],
+          constructorArguments: [params.accountRegistry, params.relImplementation, params.mintFee],
         })
         console.log("Contract verified")
       } catch (error) {
@@ -59,5 +66,5 @@ task("deploy-relationship-registry", "Deploys the ZexCraftRelationshipRegistry c
       )
     }
 
-    console.log(`\ZexCraftRelationshipRegistry contract deployed to ${relationshipRegistry.address} on ${network.name}`)
+    console.log(`\InCraftRelationshipRegistry contract deployed to ${relationshipRegistry.address} on ${network.name}`)
   })

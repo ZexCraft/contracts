@@ -1,9 +1,9 @@
 const { networks } = require("../../networks")
 
-task("deploy-registry", "Deploys the ZexCraftERC6551Registry contract")
+task("deploy-registry", "Deploys the InCraftERC6551Registry contract")
   .addOptionalParam("verify", "Set to true to verify contract", false, types.boolean)
   .setAction(async (taskArgs) => {
-    console.log(`Deploying ZexCraftERC6551Registry contract to ${network.name}`)
+    console.log(`Deploying InCraftERC6551Registry contract to ${network.name}`)
 
     console.log("\n__Compiling Contracts__")
     await run("compile")
@@ -11,19 +11,19 @@ task("deploy-registry", "Deploys the ZexCraftERC6551Registry contract")
     const params = {
       implementation: networks[network.name].implementation,
     }
-
-    const zexCraftContractFactory = await ethers.getContractFactory("ZexCraftERC6551Registry")
-    const zexCraftContract = await zexCraftContractFactory.deploy(params.implementation)
+    console.log(params.implementation)
+    const inCraftContractFactory = await ethers.getContractFactory("InCraftERC6551Registry")
+    const inCraftContract = await inCraftContractFactory.deploy(params.implementation)
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
-        zexCraftContract.deployTransaction.hash
+        inCraftContract.deployTransaction.hash
       } to be confirmed...`
     )
 
-    await zexCraftContract.deployTransaction.wait(networks[network.name].confirmations)
+    await inCraftContract.deployTransaction.wait(networks[network.name].confirmations)
 
-    console.log("\nDeployed ZexCraftERC6551Registry contract to:", zexCraftContract.address)
+    console.log("\nDeployed InCraftERC6551Registry contract to:", inCraftContract.address)
 
     if (network.name === "localFunctionsTestnet") {
       return
@@ -39,7 +39,7 @@ task("deploy-registry", "Deploys the ZexCraftERC6551Registry contract")
       try {
         console.log("\nVerifying contract...")
         await run("verify:verify", {
-          address: zexCraftContract.address,
+          address: inCraftContract.address,
           constructorArguments: [params.implementation],
         })
         console.log("Contract verified")
@@ -59,5 +59,5 @@ task("deploy-registry", "Deploys the ZexCraftERC6551Registry contract")
       )
     }
 
-    console.log(`\ZexCraftERC6551Registry contract deployed to ${zexCraftContract.address} on ${network.name}`)
+    console.log(`\InCraftERC6551Registry contract deployed to ${inCraftContract.address} on ${network.name}`)
   })

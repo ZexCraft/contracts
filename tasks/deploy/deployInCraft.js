@@ -1,41 +1,36 @@
+const { types } = require("hardhat/config")
 const { networks } = require("../../networks")
+const fs = require("fs")
 
-task("deploy-crosschain-mint", "Deploys the ZexCraftCrosschainMint contract")
+task("deploy-incraft", "Deploys the InCraftNFT contract")
   .addOptionalParam("verify", "Set to true to verify contract", false, types.boolean)
   .setAction(async (taskArgs) => {
-    console.log(`Deploying ZexCraftCrosschainMint contract to ${network.name}`)
+    console.log(`Deploying InCraftNFT contract to ${network.name}`)
+
+    const params = {
+      relRegistry: networks[network.name].relRegistry,
+      registry: networks[network.name].registry,
+      mintFee: networks[network.name].mintFee,
+    }
 
     console.log("\n__Compiling Contracts__")
     await run("compile")
 
-    const params = {
-      router: networks[network.name].ccipRouter,
-      link: networks[network.name].linkToken,
-      zexcraftNft: networks.avalancheFuji.zexcraftNft,
-      baseChainAddress: networks.avalancheFuji.baseChainAddress,
-      mintFee: networks.avalancheFuji.mintFee,
-      ccipToken: networks[network.name].ccipToken,
-    }
-    console.log(params)
-    const crosschainMintFactory = await ethers.getContractFactory("ZexCraftCrosschainMint")
-    const crosschainMint = await crosschainMintFactory.deploy(
-      params.router,
-      params.link,
-      params.zexcraftNft,
-      params.baseChainAddress,
-      params.mintFee,
-      params.ccipToken
-    )
+    console.log(params.relRegistry)
+    console.log(params.registry)
+    console.log(params.mintFee)
+    const inCraftContractFactory = await ethers.getContractFactory("InCraftNFT")
+    const inCraftContract = await inCraftContractFactory.deploy(params.relRegistry, params.registry, params.mintFee)
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
-        crosschainMint.deployTransaction.hash
+        inCraftContract.deployTransaction.hash
       } to be confirmed...`
     )
 
-    await crosschainMint.deployTransaction.wait(networks[network.name].confirmations)
+    await inCraftContract.deployTransaction.wait(networks[network.name].confirmations)
 
-    console.log("\nDeployed ZexCraftCrosschainMint contract to:", crosschainMint.address)
+    console.log("\nDeployed InCraftNFT contract to:", inCraftContract.address)
 
     if (network.name === "localFunctionsTestnet") {
       return
@@ -51,15 +46,8 @@ task("deploy-crosschain-mint", "Deploys the ZexCraftCrosschainMint contract")
       try {
         console.log("\nVerifying contract...")
         await run("verify:verify", {
-          address: crosschainMint.address,
-          constructorArguments: [
-            params.router,
-            params.link,
-            params.zexcraftNft,
-            params.baseChainAddress,
-            params.mintFee,
-            params.ccipToken,
-          ],
+          address: inCraftContract.address,
+          constructorArguments: [params.relRegistry, params.registry, params.mintFee],
         })
         console.log("Contract verified")
       } catch (error) {
@@ -78,5 +66,5 @@ task("deploy-crosschain-mint", "Deploys the ZexCraftCrosschainMint contract")
       )
     }
 
-    console.log(`\n ZexCraftCrosschainMint contract deployed to ${crosschainMint.address} on ${network.name}`)
+    console.log(`\InCraftNFT contract deployed to ${inCraftContract.address} on ${network.name}`)
   })

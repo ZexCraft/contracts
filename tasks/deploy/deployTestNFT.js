@@ -1,38 +1,25 @@
-const { types } = require("hardhat/config")
 const { networks } = require("../../networks")
 
-task("deploy-consumer", "Deploys the FunctionsConsumer contract")
+task("deploy-nft", "Deploys the TestNFT contract")
   .addOptionalParam("verify", "Set to true to verify contract", false, types.boolean)
   .setAction(async (taskArgs) => {
-    console.log(`Deploying FunctionsConsumer contract to ${network.name}`)
-
-    const functionsRouter = networks[network.name]["functionsRouter"]
-    const donIdBytes32 = hre.ethers.utils.formatBytes32String(networks[network.name]["donId"])
+    console.log(`Deploying TestNFT contract to ${network.name}`)
 
     console.log("\n__Compiling Contracts__")
     await run("compile")
-
-    const overrides = {}
-    // If specified, use the gas price from the network config instead of Ethers estimated price
-    if (networks[network.name].gasPrice) {
-      overrides.gasPrice = networks[network.name].gasPrice
-    }
-    // If specified, use the nonce from the network config instead of automatically calculating it
-    if (networks[network.name].nonce) {
-      overrides.nonce = networks[network.name].nonce
-    }
-
-    const consumerContractFactory = await ethers.getContractFactory("FunctionsConsumer")
-    const consumerContract = await consumerContractFactory.deploy(functionsRouter, donIdBytes32, overrides)
+    const intialOwner = "0x1e167D5Cc4F0CaD6d12c5Aea356e780dE60dE437"
+    const inCraftContractFactory = await ethers.getContractFactory("TestNFT")
+    const inCraftContract = await inCraftContractFactory.deploy(intialOwner)
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
-        consumerContract.deployTransaction.hash
+        inCraftContract.deployTransaction.hash
       } to be confirmed...`
     )
-    await consumerContract.deployTransaction.wait(networks[network.name].confirmations)
 
-    console.log("\nDeployed FunctionsConsumer contract to:", consumerContract.address)
+    await inCraftContract.deployTransaction.wait(networks[network.name].confirmations)
+
+    console.log("\nDeployed TestNFT contract to:", inCraftContract.address)
 
     if (network.name === "localFunctionsTestnet") {
       return
@@ -48,8 +35,8 @@ task("deploy-consumer", "Deploys the FunctionsConsumer contract")
       try {
         console.log("\nVerifying contract...")
         await run("verify:verify", {
-          address: consumerContract.address,
-          constructorArguments: [functionsRouter, donIdBytes32],
+          address: inCraftContract.address,
+          constructorArguments: [intialOwner],
         })
         console.log("Contract verified")
       } catch (error) {
@@ -68,5 +55,5 @@ task("deploy-consumer", "Deploys the FunctionsConsumer contract")
       )
     }
 
-    console.log(`\nFunctionsConsumer contract deployed to ${consumerContract.address} on ${network.name}`)
+    console.log(`\n TestNFT contract deployed to ${inCraftContract.address} on ${network.name}`)
   })

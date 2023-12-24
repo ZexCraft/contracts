@@ -10,6 +10,7 @@ interface IERC6551Account {
 
   function isValidSigner(address signer, bytes calldata context) external view returns (bytes4 magicValue);
 
-  function isSigner(address signer) external view returns (bool) ;
-   
+  function isSigner(address signer) external view returns (bool);
+
+  function owner() external view returns (address);
 }

@@ -1,14 +1,14 @@
 const { networks } = require("../../networks")
 
-task("deploy-powerups", "Deploys the ZexCraftPowerups contract")
+task("deploy-powerups", "Deploys the InCraftPowerups contract")
   .addOptionalParam("verify", "Set to true to verify contract", false, types.boolean)
   .setAction(async (taskArgs) => {
-    console.log(`Deploying ZexCraftPowerups contract to ${network.name}`)
+    console.log(`Deploying InCraftPowerups contract to ${network.name}`)
 
     console.log("\n__Compiling Contracts__")
     await run("compile")
 
-    const powerupsFactory = await ethers.getContractFactory("ZexCraftPowerups")
+    const powerupsFactory = await ethers.getContractFactory("InCraftPowerups")
     const powerups = await powerupsFactory.deploy()
 
     console.log(
@@ -19,7 +19,7 @@ task("deploy-powerups", "Deploys the ZexCraftPowerups contract")
 
     await powerups.deployTransaction.wait(networks[network.name].confirmations)
 
-    console.log("\nDeployed ZexCraftPowerups contract to:", powerups.address)
+    console.log("\nDeployed InCraftPowerups contract to:", powerups.address)
 
     if (network.name === "localFunctionsTestnet") {
       return
@@ -55,5 +55,5 @@ task("deploy-powerups", "Deploys the ZexCraftPowerups contract")
       )
     }
 
-    console.log(`\ZexCraftPowerups contract deployed to ${powerups.address} on ${network.name}`)
+    console.log(`\InCraftPowerups contract deployed to ${powerups.address} on ${network.name}`)
   })

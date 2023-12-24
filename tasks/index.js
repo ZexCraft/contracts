@@ -1,7 +1,2 @@
-exports.FunctionsConsumer = require("./Functions-consumer")
-exports.FunctionsBilling = require("./Functions-billing")
-exports.balance = require("./balance")
-exports.blockNumber = require("./block-number")
-exports.simulateScript = require("./simulateScript")
 exports.verify = require("./verify")
 exports.deploy = require("./deploy")

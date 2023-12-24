@@ -29,7 +29,7 @@ contract CraftToken is ERC20, Ownable {
   function permit(address owner, uint256 amount, address spender, uint256 deadline, bytes memory signature) external {
     require(deadline >= block.timestamp, "expired deadline");
     bytes32 dataHash = keccak256(abi.encodePacked(owner, spender, amount, nonces[owner], deadline));
-    require(verifySignature(owner, dataHash, signature), "invalid signature");
+    require(verifySignature(owner, dataHash, signature), "invalid permit sig");
     _approve(owner, spender, amount);
     nonces[owner] += 1;
   }

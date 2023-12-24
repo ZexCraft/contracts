@@ -82,8 +82,11 @@ contract InCraftNFT is ERC721, ERC721URIStorage {
   }
 
   function verifySignature(address creator, bytes32 dataHash, bytes memory signature) public pure returns (bool) {
-    address signer = dataHash.toEthSignedMessageHash().recover(signature);
-    return signer == creator;
+    return recoverSigner(dataHash, signature) == creator;
+  }
+
+  function recoverSigner(bytes32 dataHash, bytes memory signature) public pure returns (address) {
+    return dataHash.toEthSignedMessageHash().recover(signature);
   }
 
   function createNft(
@@ -113,7 +116,7 @@ contract InCraftNFT is ERC721, ERC721URIStorage {
 
     rarity[tokenIdCounter] = uint256(
       keccak256(abi.encodePacked(block.number, block.timestamp, creator, tokenIdCounter))
-    );
+    )%100;
     emit InCraftNFTCreated(tokenIdCounter, tokenURI, creator, account, rarity[tokenIdCounter], false);
     tokenIdCounter++;
   }

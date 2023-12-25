@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/utils/Create2.sol";
 
 import "./interfaces/IERC6551Registry.sol";
 
-contract InCraftERC6551Registry is IERC6551Registry {
+contract ZexCraftERC6551Registry is IERC6551Registry {
   error InitializationFailed();
   address public immutable i_implementation;
 

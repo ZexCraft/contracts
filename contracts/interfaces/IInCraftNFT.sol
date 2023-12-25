@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import "./IRelationship.sol";
 
-interface IInCraftNFT {
+interface IZexCraftNFT {
   function createBaby(
     address parent1,
     address parent2,

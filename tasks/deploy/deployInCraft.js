@@ -2,10 +2,10 @@ const { types } = require("hardhat/config")
 const { networks } = require("../../networks")
 const fs = require("fs")
 
-task("deploy-incraft", "Deploys the InCraftNFT contract")
+task("deploy-zexcraft", "Deploys the ZexCraftNFT contract")
   .addOptionalParam("verify", "Set to true to verify contract", false, types.boolean)
   .setAction(async (taskArgs) => {
-    console.log(`Deploying InCraftNFT contract to ${network.name}`)
+    console.log(`Deploying ZexCraftNFT contract to ${network.name}`)
 
     const params = {
       relRegistry: networks[network.name].relRegistry,
@@ -19,18 +19,18 @@ task("deploy-incraft", "Deploys the InCraftNFT contract")
     console.log(params.relRegistry)
     console.log(params.registry)
     console.log(params.mintFee)
-    const inCraftContractFactory = await ethers.getContractFactory("InCraftNFT")
-    const inCraftContract = await inCraftContractFactory.deploy(params.relRegistry, params.registry, params.mintFee)
+    const zexCraftContractFactory = await ethers.getContractFactory("ZexCraftNFT")
+    const zexCraftContract = await zexCraftContractFactory.deploy(params.relRegistry, params.registry, params.mintFee)
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
-        inCraftContract.deployTransaction.hash
+        zexCraftContract.deployTransaction.hash
       } to be confirmed...`
     )
 
-    await inCraftContract.deployTransaction.wait(networks[network.name].confirmations)
+    await zexCraftContract.deployTransaction.wait(networks[network.name].confirmations)
 
-    console.log("\nDeployed InCraftNFT contract to:", inCraftContract.address)
+    console.log("\nDeployed ZexCraftNFT contract to:", zexCraftContract.address)
 
     if (network.name === "localFunctionsTestnet") {
       return
@@ -46,7 +46,7 @@ task("deploy-incraft", "Deploys the InCraftNFT contract")
       try {
         console.log("\nVerifying contract...")
         await run("verify:verify", {
-          address: inCraftContract.address,
+          address: zexCraftContract.address,
           constructorArguments: [params.relRegistry, params.registry, params.mintFee],
         })
         console.log("Contract verified")
@@ -66,5 +66,5 @@ task("deploy-incraft", "Deploys the InCraftNFT contract")
       )
     }
 
-    console.log(`\InCraftNFT contract deployed to ${inCraftContract.address} on ${network.name}`)
+    console.log(`\ZexCraftNFT contract deployed to ${zexCraftContract.address} on ${network.name}`)
   })

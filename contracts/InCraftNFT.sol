@@ -14,7 +14,7 @@ import "./interfaces/IRelationship.sol";
 import "./interfaces/IERC721URIStorage.sol";
 import "./interfaces/ICraftToken.sol";
 
-contract InCraftNFT is ERC721, ERC721URIStorage {
+contract ZexCraftNFT is ERC721, ERC721URIStorage {
   using ECDSA for bytes32;
   using MessageHashUtils for bytes32;
   using Strings for uint256;
@@ -28,11 +28,11 @@ contract InCraftNFT is ERC721, ERC721URIStorage {
   mapping(address => bool) public accounts;
   mapping(uint256 => uint256) public rarity;
 
-  string public constant MINT_ACTION = "INCRAFT_MINT";
+  string public constant MINT_ACTION = "ZEXCRAFT_MINT";
 
   address public operator;
 
-  constructor(address _relRegistry, IERC6551Registry _accountRegistry, uint256 _mintFee) ERC721("InCraft", "PCT") {
+  constructor(address _relRegistry, IERC6551Registry _accountRegistry, uint256 _mintFee) ERC721("ZexCraft", "PCT") {
     relRegistry = IRelationshipRegistry(_relRegistry);
     mintFee = _mintFee;
     tokenIdCounter = 0;
@@ -41,7 +41,7 @@ contract InCraftNFT is ERC721, ERC721URIStorage {
     operator = msg.sender;
   }
 
-  event InCraftNFTCreated(
+  event ZexCraftNFTCreated(
     uint256 tokenId,
     string tokenUri,
     address owner,
@@ -49,7 +49,7 @@ contract InCraftNFT is ERC721, ERC721URIStorage {
     uint256 rarity
   );
 
-  event InCraftNFTBred(
+  event ZexCraftNFTBred(
     uint256 tokenId,
     string tokenUri,
     address owner,
@@ -115,7 +115,7 @@ contract InCraftNFT is ERC721, ERC721URIStorage {
     rarity[tokenIdCounter] = uint256(
       keccak256(abi.encodePacked(block.number, block.timestamp, creator, tokenIdCounter))
     )%100;
-    emit InCraftNFTCreated(tokenIdCounter, tokenURI, creator, account, rarity[tokenIdCounter]);
+    emit ZexCraftNFTCreated(tokenIdCounter, tokenURI, creator, account, rarity[tokenIdCounter]);
     tokenIdCounter++;
   }
 
@@ -135,7 +135,7 @@ contract InCraftNFT is ERC721, ERC721URIStorage {
       keccak256(abi.encodePacked(block.number, block.timestamp, nft1Address, nft2Address))
     )%100;
 
-    emit InCraftNFTBred(
+    emit ZexCraftNFTBred(
       tokenIdCounter,
       tokenURI,
       relationship,

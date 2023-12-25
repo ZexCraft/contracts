@@ -9,16 +9,16 @@ import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 contract CraftToken is ERC20, Ownable {
   using ECDSA for bytes32;
   using MessageHashUtils for bytes32;
-  address public immutable i_inCraftNftAddress;
+  address public immutable i_zexCraftNftAddress;
 
   mapping(address => uint256) public nonces;
 
-  constructor(address inCraftNFT) ERC20("CraftToken", "CFT") Ownable(msg.sender) {
-    i_inCraftNftAddress = inCraftNFT;
+  constructor(address zexCraftNFT) ERC20("CraftToken", "CFT") Ownable(msg.sender) {
+    i_zexCraftNftAddress = zexCraftNFT;
   }
 
-  modifier onlyInCraftNFT() {
-    require(msg.sender == i_inCraftNftAddress, "Only InCraft NFT can mint new tokens");
+  modifier onlyZexCraftNFT() {
+    require(msg.sender == i_zexCraftNftAddress, "Only ZexCraft NFT can mint new tokens");
     _;
   }
 

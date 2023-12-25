@@ -7,19 +7,19 @@ task("deploy-craft-token", "Deploys the CraftToken contract")
 
     console.log("\n__Compiling Contracts__")
     await run("compile")
-    const inCraft = networks[network.name].inCraft
-    const inCraftContractFactory = await ethers.getContractFactory("CraftToken")
-    const inCraftContract = await inCraftContractFactory.deploy(inCraft)
+    const zexCraft = networks[network.name].zexCraft
+    const zexCraftContractFactory = await ethers.getContractFactory("CraftToken")
+    const zexCraftContract = await zexCraftContractFactory.deploy(zexCraft)
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
-        inCraftContract.deployTransaction.hash
+        zexCraftContract.deployTransaction.hash
       } to be confirmed...`
     )
 
-    await inCraftContract.deployTransaction.wait(networks[network.name].confirmations)
+    await zexCraftContract.deployTransaction.wait(networks[network.name].confirmations)
 
-    console.log("\nDeployed CraftToken contract to:", inCraftContract.address)
+    console.log("\nDeployed CraftToken contract to:", zexCraftContract.address)
 
     if (network.name === "localFunctionsTestnet") {
       return
@@ -35,8 +35,8 @@ task("deploy-craft-token", "Deploys the CraftToken contract")
       try {
         console.log("\nVerifying contract...")
         await run("verify:verify", {
-          address: inCraftContract.address,
-          constructorArguments: [inCraft],
+          address: zexCraftContract.address,
+          constructorArguments: [zexCraft],
         })
         console.log("Contract verified")
       } catch (error) {
@@ -55,5 +55,5 @@ task("deploy-craft-token", "Deploys the CraftToken contract")
       )
     }
 
-    console.log(`\n CraftToken contract deployed to ${inCraftContract.address} on ${network.name}`)
+    console.log(`\n CraftToken contract deployed to ${zexCraftContract.address} on ${network.name}`)
   })

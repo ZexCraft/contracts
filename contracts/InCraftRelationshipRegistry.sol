@@ -9,7 +9,7 @@ import "./interfaces/IERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
-contract InCraftRelationshipRegistry {
+contract ZexCraftRelationshipRegistry {
   using ECDSA for bytes32;
   using MessageHashUtils for bytes32;
   uint256 public nonce;
@@ -20,11 +20,11 @@ contract InCraftRelationshipRegistry {
   uint256 public mintFee;
   address public devWallet;
   address public craftToken;
-  string public constant INCRAFT_CREATE_RELATIONSHIP="INCRAFT_CREATE_RELATIONSHIP";
+  string public constant ZEXCRAFT_CREATE_RELATIONSHIP="ZEXCRAFT_CREATE_RELATIONSHIP";
 
   mapping(address => mapping(address => bool)) public pairs;
 
-  address public inCraft;
+  address public zexCraft;
 
   constructor(IERC6551Registry _accountRegistry, address _relationshipImplementation, uint256 _mintFee) {
     relationshipImplementation = _relationshipImplementation;
@@ -35,7 +35,7 @@ contract InCraftRelationshipRegistry {
 
   event RelationshipCreated(address parent1, address parent2, address relationship);
 
-  modifier onlyInCraftERC6551Account(address otherAccount) {
+  modifier onlyZexCraftERC6551Account(address otherAccount) {
     require(accountRegistry.isAccount(msg.sender), "TxSender not account");
     require(accountRegistry.isAccount(otherAccount), "Pair not account");
     _;
@@ -46,18 +46,18 @@ contract InCraftRelationshipRegistry {
     _;
   }
 
-  function initialize(address _inCraft, address _craftToken) external onlyDev {
-    require(inCraft == address(0), "Already intialized");
-    inCraft = _inCraft;
+  function initialize(address _zexCraft, address _craftToken) external onlyDev {
+    require(zexCraft == address(0), "Already intialized");
+    zexCraft = _zexCraft;
     craftToken = _craftToken;
   }
 
   function createRelationship(
     address otherAccount,
     bytes memory otherAccountsignature
-  ) external onlyInCraftERC6551Account(otherAccount) returns (address) {
+  ) external onlyZexCraftERC6551Account(otherAccount) returns (address) {
     address nft2Owner = IERC6551Account(payable(otherAccount)).owner();
-    bytes32 messageHash = keccak256(abi.encodePacked(INCRAFT_CREATE_RELATIONSHIP,msg.sender, otherAccount));
+    bytes32 messageHash = keccak256(abi.encodePacked(ZEXCRAFT_CREATE_RELATIONSHIP,msg.sender, otherAccount));
     address signer = messageHash.toEthSignedMessageHash().recover(otherAccountsignature);
     require(signer == nft2Owner, "Invalid signature");
 
@@ -68,14 +68,14 @@ contract InCraftRelationshipRegistry {
     address breedingAccount,
     address otherAccount
   ) internal returns (address) {
-    require(inCraft != address(0), "Not intialized");
+    require(zexCraft != address(0), "Not intialized");
     require(pairs[breedingAccount][otherAccount] == false, "pair already exists");
     require(relationshipImplementation != address(0), "impl not set");
 
     address relationship = _deployProxy(relationshipImplementation, nonce);
     require(relationshipExists[relationship] == false, "Relationship already exists");
 
-    IRelationship(relationship).initialize([breedingAccount, otherAccount], devWallet, craftToken, mintFee, inCraft);
+    IRelationship(relationship).initialize([breedingAccount, otherAccount], devWallet, craftToken, mintFee, zexCraft);
     relationshipExists[relationship] = true;
     pairs[breedingAccount][otherAccount] = true;
     pairs[otherAccount][breedingAccount] = true;

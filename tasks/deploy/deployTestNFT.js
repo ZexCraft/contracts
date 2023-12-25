@@ -8,18 +8,18 @@ task("deploy-nft", "Deploys the TestNFT contract")
     console.log("\n__Compiling Contracts__")
     await run("compile")
     const intialOwner = "0x1e167D5Cc4F0CaD6d12c5Aea356e780dE60dE437"
-    const inCraftContractFactory = await ethers.getContractFactory("TestNFT")
-    const inCraftContract = await inCraftContractFactory.deploy(intialOwner)
+    const zexCraftContractFactory = await ethers.getContractFactory("TestNFT")
+    const zexCraftContract = await zexCraftContractFactory.deploy(intialOwner)
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
-        inCraftContract.deployTransaction.hash
+        zexCraftContract.deployTransaction.hash
       } to be confirmed...`
     )
 
-    await inCraftContract.deployTransaction.wait(networks[network.name].confirmations)
+    await zexCraftContract.deployTransaction.wait(networks[network.name].confirmations)
 
-    console.log("\nDeployed TestNFT contract to:", inCraftContract.address)
+    console.log("\nDeployed TestNFT contract to:", zexCraftContract.address)
 
     if (network.name === "localFunctionsTestnet") {
       return
@@ -35,7 +35,7 @@ task("deploy-nft", "Deploys the TestNFT contract")
       try {
         console.log("\nVerifying contract...")
         await run("verify:verify", {
-          address: inCraftContract.address,
+          address: zexCraftContract.address,
           constructorArguments: [intialOwner],
         })
         console.log("Contract verified")
@@ -55,5 +55,5 @@ task("deploy-nft", "Deploys the TestNFT contract")
       )
     }
 
-    console.log(`\n TestNFT contract deployed to ${inCraftContract.address} on ${network.name}`)
+    console.log(`\n TestNFT contract deployed to ${zexCraftContract.address} on ${network.name}`)
   })

@@ -3,14 +3,14 @@ pragma solidity ^0.8.19;
 
 import "./interfaces/IRelationship.sol";
 import "./interfaces/IERC6551Account.sol";
-import "./interfaces/IInCraftNFT.sol";
+import "./interfaces/IZexCraftNFT.sol";
 import "./interfaces/ICraftToken.sol";
 
 import "./interfaces/INFT.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
-contract InCraftRelationship is IRelationship {
+contract ZexCraftRelationship is IRelationship {
   using ECDSA for bytes32;
   using MessageHashUtils for bytes32;
 
@@ -18,13 +18,13 @@ contract InCraftRelationship is IRelationship {
   uint256 public nonce;
   address[2] public nfts;
 
-  address public inCraft;
+  address public zexCraft;
   address public devWallet;
   ICraftToken public craftToken;
   uint256 public mintFee;
   bool public isInitialized;
 
-  string public constant INCRAFT_BREED = "INCRAFT_BREED";
+  string public constant ZEXCRAFT_BREED = "ZEXCRAFT_BREED";
 
   modifier onlyOnce() {
     require(!isInitialized, "already initialized");
@@ -42,10 +42,10 @@ contract InCraftRelationship is IRelationship {
     address _devWallet,
     address _craftToken,
     uint256 _mintFee,
-    address _inCraft
+    address _zexCraft
   ) external onlyOnce {
     nfts = _nfts;
-    inCraft = _inCraft;
+    zexCraft = _zexCraft;
     devWallet = _devWallet;
     mintFee = _mintFee;
     craftToken = ICraftToken(_craftToken);
@@ -61,7 +61,7 @@ contract InCraftRelationship is IRelationship {
   ) external payable virtual returns (bytes memory result) {
     require(verifySignature(nfts[0], keccak256(data), signatures[0]), "invalid signature 1");
     require(verifySignature(nfts[1], keccak256(data), signatures[1]), "invalid signature 2");
-    require(to != inCraft, "Only dev wallet");
+    require(to != zexCraft, "Only dev wallet");
     require(operation == 0, "Only call operations are supported");
     ++state;
 
@@ -86,14 +86,14 @@ contract InCraftRelationship is IRelationship {
     require(verifySignature(nfts[1], dataHash, signatures[1]), "invalid nft2 sig");
     require(craftToken.balanceOf(address(this)) >= mintFee, "insufficient fee");
 
-    craftToken.approve(inCraft, mintFee);
-    account = IInCraftNFT(inCraft).createBaby(nfts[0], nfts[1], address(this), tokenURI);
+    craftToken.approve(zexCraft, mintFee);
+    account = IZexCraftNFT(zexCraft).createBaby(nfts[0], nfts[1], address(this), tokenURI);
     nonce++;
 
   }
 
   function getSignData() public view returns (bytes32) {
-    return keccak256(abi.encodePacked(INCRAFT_BREED, address(this), nonce));
+    return keccak256(abi.encodePacked(ZEXCRAFT_BREED, address(this), nonce));
   }
 
   function getParents() external view returns (address, address) {

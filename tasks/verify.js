@@ -9,7 +9,7 @@ task("verify-contract", "Verifies contract")
         'This command cannot be used on a local development chain.  Specify a valid network or simulate an Functions request locally with "npx hardhat functions-simulate".'
       )
     }
-    const inCraft = networks[network.name].inCraft
+    const zexCraft = networks[network.name].zexCraft
 
     const constructorArguments = []
 

@@ -1,27 +1,27 @@
 const { networks } = require("../../networks")
 
-task("deploy-implementation", "Deploys the InCraftERC6551Account contract")
+task("deploy-implementation", "Deploys the ZexCraftERC6551Account contract")
   .addOptionalParam("verify", "Set to true to verify contract", false, types.boolean)
   .setAction(async (taskArgs) => {
-    console.log(`Deploying InCraftERC6551Account contract to ${network.name}`)
+    console.log(`Deploying ZexCraftERC6551Account contract to ${network.name}`)
 
     console.log("\n__Compiling Contracts__")
     await run("compile")
 
     console.log(networks[network.name].url)
 
-    const inCraftContractFactory = await ethers.getContractFactory("InCraftERC6551Account")
-    const inCraftContract = await inCraftContractFactory.deploy()
+    const zexCraftContractFactory = await ethers.getContractFactory("ZexCraftERC6551Account")
+    const zexCraftContract = await zexCraftContractFactory.deploy()
 
     console.log(
       `\nWaiting ${networks[network.name].confirmations} blocks for transaction ${
-        inCraftContract.deployTransaction.hash
+        zexCraftContract.deployTransaction.hash
       } to be confirmed...`
     )
 
-    await inCraftContract.deployTransaction.wait(networks[network.name].confirmations)
+    await zexCraftContract.deployTransaction.wait(networks[network.name].confirmations)
 
-    console.log("\nDeployed InCraftERC6551Account contract to:", inCraftContract.address)
+    console.log("\nDeployed ZexCraftERC6551Account contract to:", zexCraftContract.address)
 
     if (network.name === "localFunctionsTestnet") {
       return
@@ -37,7 +37,7 @@ task("deploy-implementation", "Deploys the InCraftERC6551Account contract")
       try {
         console.log("\nVerifying contract...")
         await run("verify:verify", {
-          address: inCraftContract.address,
+          address: zexCraftContract.address,
           constructorArguments: [],
         })
         console.log("Contract verified")
@@ -57,5 +57,5 @@ task("deploy-implementation", "Deploys the InCraftERC6551Account contract")
       )
     }
 
-    console.log(`\InCraftERC6551Account contract deployed to ${inCraftContract.address} on ${network.name}`)
+    console.log(`\ZexCraftERC6551Account contract deployed to ${zexCraftContract.address} on ${network.name}`)
   })

@@ -33,7 +33,7 @@ contract ZexCraftRelationshipRegistry {
     mintFee = _mintFee;
   }
 
-  event RelationshipCreated(address parent1, address parent2, address relationship);
+  event RelationshipCreated(address parent1, address parent2, address relationship,address signer1,address signer2);
 
   modifier onlyZexCraftERC6551Account(address otherAccount) {
     require(accountRegistry.isAccount(msg.sender), "TxSender not account");
@@ -56,17 +56,21 @@ contract ZexCraftRelationshipRegistry {
     address otherAccount,
     bytes memory otherAccountsignature
   ) external onlyZexCraftERC6551Account(otherAccount) returns (address) {
+    address nft1Owner= IERC6551Account(payable(msg.sender)).owner();
     address nft2Owner = IERC6551Account(payable(otherAccount)).owner();
+    
     bytes32 messageHash = keccak256(abi.encodePacked(ZEXCRAFT_CREATE_RELATIONSHIP,msg.sender, otherAccount));
     address signer = messageHash.toEthSignedMessageHash().recover(otherAccountsignature);
     require(signer == nft2Owner, "Invalid signature");
 
-    return _createRelationship(msg.sender, otherAccount);
+    return _createRelationship(msg.sender, otherAccount,nft1Owner,nft2Owner);
   }
 
   function _createRelationship(
     address breedingAccount,
-    address otherAccount
+    address otherAccount,
+    address signer1,
+    address signer2
   ) internal returns (address) {
     require(zexCraft != address(0), "Not intialized");
     require(pairs[breedingAccount][otherAccount] == false, "pair already exists");
@@ -79,7 +83,7 @@ contract ZexCraftRelationshipRegistry {
     relationshipExists[relationship] = true;
     pairs[breedingAccount][otherAccount] = true;
     pairs[otherAccount][breedingAccount] = true;
-    emit RelationshipCreated(breedingAccount, otherAccount, relationship);
+    emit RelationshipCreated(breedingAccount, otherAccount, relationship,signer1,signer2);
     nonce++;
     return relationship;
   }

@@ -1,19 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "./viction/VRC25.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
-contract CraftToken is ERC20, Ownable {
+contract CraftToken is VRC25 {
   using ECDSA for bytes32;
   using MessageHashUtils for bytes32;
   address public immutable i_zexCraftNftAddress;
+  address public devWallet;
 
   mapping(address => uint256) public nonces;
 
-  constructor(address zexCraftNFT) ERC20("CraftToken", "CFT") Ownable(msg.sender) {
+  constructor(address zexCraftNFT) VRC25("CraftToken", "CFT",18){
+    devWallet=msg.sender;
     i_zexCraftNftAddress = zexCraftNFT;
   }
 
@@ -26,6 +28,9 @@ contract CraftToken is ERC20, Ownable {
     _mint(to, 1000000000000000000);
   }
 
+  function _estimateFee(uint256 value) internal view override returns (uint256) {
+    return 0;
+  }
   function permit(address owner, uint256 amount, address spender, uint256 deadline, bytes memory signature) external {
     require(deadline >= block.timestamp, "expired deadline");
     bytes32 dataHash = keccak256(abi.encodePacked(owner, spender, amount, nonces[owner], deadline));

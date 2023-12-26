@@ -49,7 +49,7 @@ module.exports = {
         network: "victionTestnet",
         chainId: 89,
         urls: {
-          apiURL: "https://www.testnet.vicscan.xyz/api/contract/hardhat/verify",
+          apiURL: "https://scan-api-testnet.viction.xyz/api/contract/hardhat/verify",
           browserURL: "https://testnet.vicscan.xyz",
         },
       },

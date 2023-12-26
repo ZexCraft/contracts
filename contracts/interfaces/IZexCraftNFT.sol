@@ -8,6 +8,7 @@ interface IZexCraftNFT {
     address parent1,
     address parent2,
     address relationship,
-    string memory tokenURI
+    string memory tokenURI,
+    string memory altImage
   ) external returns (address);
 }

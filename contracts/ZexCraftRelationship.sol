@@ -80,14 +80,14 @@ contract ZexCraftRelationship is IRelationship {
     return signer == IERC6551Account(payable(nftAccount)).owner();
   }
 
-  function createBaby(string memory tokenURI, bytes[2] memory signatures) external onlyDev returns (address account) {
+  function createBaby(string memory tokenURI,string memory altImage, bytes[2] memory signatures) external onlyDev returns (address account) {
     bytes32 dataHash = getSignData();
     require(verifySignature(nfts[0], dataHash, signatures[0]), "invalid nft1 sig");
     require(verifySignature(nfts[1], dataHash, signatures[1]), "invalid nft2 sig");
     require(craftToken.balanceOf(address(this)) >= mintFee, "insufficient fee");
 
     craftToken.approve(zexCraft, mintFee);
-    account = IZexCraftNFT(zexCraft).createBaby(nfts[0], nfts[1], address(this), tokenURI);
+    account = IZexCraftNFT(zexCraft).createBaby(nfts[0], nfts[1], address(this), tokenURI, altImage);
     nonce++;
 
   }

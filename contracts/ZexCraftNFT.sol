@@ -44,6 +44,7 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage {
   event ZexCraftNFTCreated(
     uint256 tokenId,
     string tokenUri,
+    string altImage,
     address owner,
     address account,
     uint256 rarity
@@ -52,6 +53,7 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage {
   event ZexCraftNFTBred(
     uint256 tokenId,
     string tokenUri,
+    string altImage,
     address owner,
     address parent1,
     address parent2,
@@ -89,6 +91,7 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage {
 
   function createNft(
     string memory tokenURI,
+    string memory altImage,
     address creator,
     bytes memory permitTokensSignature,
     bytes memory createNftSignature
@@ -98,7 +101,7 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage {
 
     ICraftToken(craftToken).transferFrom(creator, address(this), mintFee);
 
-    bytes32 dataHash = keccak256(abi.encodePacked(MINT_ACTION, tokenURI, creator));
+    bytes32 dataHash = keccak256(abi.encodePacked(MINT_ACTION, tokenURI, altImage, creator));
     require(verifySignature(creator, dataHash, createNftSignature), "invalid signature");
 
     _mint(creator, tokenIdCounter);
@@ -115,7 +118,7 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage {
     rarity[tokenIdCounter] = uint256(
       keccak256(abi.encodePacked(block.number, block.timestamp, creator, tokenIdCounter))
     )%100;
-    emit ZexCraftNFTCreated(tokenIdCounter, tokenURI, creator, account, rarity[tokenIdCounter]);
+    emit ZexCraftNFTCreated(tokenIdCounter, tokenURI,altImage, creator, account, rarity[tokenIdCounter]);
     tokenIdCounter++;
   }
 
@@ -123,7 +126,8 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage {
     address nft1Address,
     address nft2Address,
     address relationship,
-    string memory tokenURI
+    string memory tokenURI,
+    string memory altImage
   ) external onlyRelationship returns (address account) {
     require(tx.origin == operator, "only dev owner");
     require(ICraftToken(craftToken).transferFrom(msg.sender, address(this), mintFee), "transfer failed");
@@ -138,6 +142,7 @@ contract ZexCraftNFT is ERC721, ERC721URIStorage {
     emit ZexCraftNFTBred(
       tokenIdCounter,
       tokenURI,
+      altImage,
       relationship,
       nft1Address,
       nft2Address,

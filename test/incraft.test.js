@@ -14,7 +14,7 @@ describe("zexcraft", function () {
   let relationship
   let relRegistry
 
-  async function createNft(tokenURI, creator) {
+  async function createNft(tokenURI, altImage, creator) {
     const nonce = await craftToken.nonces(creator.address)
     const tokenIdCounter = await zexcraft.tokenIdCounter()
     const accountAddress = await registry.account(
@@ -42,7 +42,7 @@ describe("zexcraft", function () {
     const ZEXCRAFT_MINT = "ZEXCRAFT_MINT"
 
     const mintTokenHash = arrayify(
-      solidityKeccak256(["string", "string", "address"], [ZEXCRAFT_MINT, tokenURI, creator.address])
+      solidityKeccak256(["string", "string", "string", "address"], [ZEXCRAFT_MINT, tokenURI, altImage, creator.address])
     )
 
     const mintTokenSignature = await creator.signMessage(mintTokenHash)
@@ -51,7 +51,13 @@ describe("zexcraft", function () {
     console.log("Mint Token Signature: ")
     console.log(mintTokenSignature)
 
-    const createNftTx = await zexcraft.createNft(tokenURI, creator.address, permitTokenSignature, mintTokenSignature)
+    const createNftTx = await zexcraft.createNft(
+      tokenURI,
+      altImage,
+      creator.address,
+      permitTokenSignature,
+      mintTokenSignature
+    )
     const createNftReceipt = await createNftTx.wait()
     const rarity = await zexcraft.rarity(tokenIdCounter)
 
@@ -61,20 +67,28 @@ describe("zexcraft", function () {
       if (event.event == "ZexCraftNFTCreated") {
         expect(event.args[0]).to.equal(tokenIdCounter)
         expect(event.args[1]).to.equal(tokenURI)
-        expect(event.args[2]).to.equal(creator.address)
-        expect(event.args[3]).to.equal(accountAddress)
-        expect(event.args[4]).to.equal(rarity)
+        expect(event.args[2]).to.equal(altImage)
+        expect(event.args[3]).to.equal(creator.address)
+        expect(event.args[4]).to.equal(accountAddress)
+        expect(event.args[5]).to.equal(rarity)
       }
     })
     return accountAddress
   }
 
-  async function createRelationship(firstTokenUri, secondTokenUri, firstOwner, secondOwner) {
+  async function createRelationship(
+    firstTokenUri,
+    firstAltImage,
+    secondTokenUri,
+    secondAltImage,
+    firstOwner,
+    secondOwner
+  ) {
     // Create First NFT and Account
-    const firstAccountAddress = await createNft(firstTokenUri, firstOwner)
+    const firstAccountAddress = await createNft(firstTokenUri, firstAltImage, firstOwner)
 
     // Create Second NFT and Second Account
-    const secondAccountAddress = await createNft(secondTokenUri, secondOwner)
+    const secondAccountAddress = await createNft(secondTokenUri, secondAltImage, secondOwner)
 
     // Create First Account Create Relationship Signature
 
@@ -184,27 +198,51 @@ describe("zexcraft", function () {
 
   it("Should create nft successfully", async function () {
     const tokenURI = "https://bafkreibufkhlr6kaq4mhb4tpczbwtzm7jx2q7nrnwed2ndk6klrv6da54u.ipfs.nftstorage.link/"
-    const createdAccountAddress = await createNft(tokenURI, owner)
+    const altImage =
+      "https://otvzzmqknnjthpuwmrpb.supabase.co/storage/v1/object/public/images/bafybeicj5gcjlkdouwgyrgx2bfqgkx4sg6v4ihj7dwbiz6pxb6fjwe6llu.png"
+    const createdAccountAddress = await createNft(tokenURI, altImage, owner)
     console.log("\nCreated Account Address: ", createdAccountAddress)
   })
 
   it("should create relationship successfully", async function () {
     const firstTokenUri = "https://bafkreibufkhlr6kaq4mhb4tpczbwtzm7jx2q7nrnwed2ndk6klrv6da54u.ipfs.nftstorage.link/"
+    const firstAltImage =
+      "https://otvzzmqknnjthpuwmrpb.supabase.co/storage/v1/object/public/images/bafybeicj5gcjlkdouwgyrgx2bfqgkx4sg6v4ihj7dwbiz6pxb6fjwe6llu.png"
     const firstOwner = notOwner
     const secondTokenUri = "https://bafkreib6msd3hg6gmbju6oofsoc2wbd7q4jd3kmqrsuwvdqo77hqedhple.ipfs.nftstorage.link/"
+    const secondAltImage =
+      "https://otvzzmqknnjthpuwmrpb.supabase.co/storage/v1/object/public/images/bafybeifrp62uv4q3wylnpiybpvzcsjsezn36lfuupg4rsdwfauqvzmkjqa.png"
     const secondOwner = owner
 
-    const relationship = await createRelationship(firstTokenUri, secondTokenUri, firstOwner, secondOwner)
+    const relationship = await createRelationship(
+      firstTokenUri,
+      firstAltImage,
+      secondTokenUri,
+      secondAltImage,
+      firstOwner,
+      secondOwner
+    )
     console.log("\nRelationship Address: ", relationship)
   })
 
   it("should create baby successfully", async function () {
     const firstTokenUri = "https://bafkreibufkhlr6kaq4mhb4tpczbwtzm7jx2q7nrnwed2ndk6klrv6da54u.ipfs.nftstorage.link/"
+    const firstAltImage =
+      "https://otvzzmqknnjthpuwmrpb.supabase.co/storage/v1/object/public/images/bafybeicj5gcjlkdouwgyrgx2bfqgkx4sg6v4ihj7dwbiz6pxb6fjwe6llu.png"
     const firstOwner = notOwner
     const secondTokenUri = "https://bafkreib6msd3hg6gmbju6oofsoc2wbd7q4jd3kmqrsuwvdqo77hqedhple.ipfs.nftstorage.link/"
+    const secondAltImage =
+      "https://otvzzmqknnjthpuwmrpb.supabase.co/storage/v1/object/public/images/bafybeifrp62uv4q3wylnpiybpvzcsjsezn36lfuupg4rsdwfauqvzmkjqa.png"
     const secondOwner = owner
 
-    const relationship = await createRelationship(firstTokenUri, secondTokenUri, firstOwner, secondOwner)
+    const relationship = await createRelationship(
+      firstTokenUri,
+      firstAltImage,
+      secondTokenUri,
+      secondAltImage,
+      firstOwner,
+      secondOwner
+    )
     console.log("\nRelationship Address: ", relationship)
 
     const Relationship = await ethers.getContractFactory("ZexCraftRelationship")
@@ -221,6 +259,8 @@ describe("zexcraft", function () {
     const secondAccountSignature = await secondOwner.signMessage(createBabyHash)
 
     const babyTokenURI = "https://bafkreiclp2df4tumxxh6jjegewdxpmqsysrbkzmqrak5rkiuldyewu5cfe.ipfs.nftstorage.link/"
+    const babyAltImage =
+      "https://otvzzmqknnjthpuwmrpb.supabase.co/storage/v1/object/public/images/bafybeifrp62uv4q3wylnpiybpvzcsjsezn36lfuupg4rsdwfauqvzmkjqa.png"
 
     const tokenIdCounter = await zexcraft.tokenIdCounter()
     const babyAccountAddress = await registry.account(
@@ -234,7 +274,7 @@ describe("zexcraft", function () {
     const dripTokensTx = await craftToken.mint(relationship)
     await dripTokensTx.wait()
 
-    const createBabyTx = await relationshipContract.createBaby(babyTokenURI, [
+    const createBabyTx = await relationshipContract.createBaby(babyTokenURI, babyAltImage, [
       secondAccountSignature,
       firstAccountSignature,
     ])
@@ -245,6 +285,7 @@ describe("zexcraft", function () {
       if (event.event == "ZexCraftNFTBred") {
         expect(event.args[0]).to.equal(tokenIdCounter)
         expect(event.args[1]).to.equal(babyTokenURI)
+        expect(event.args[2]).to.equal(babyAltImage)
         expect(event.args[2]).to.equal(relationship)
         expect(event.args[3]).to.equal(zexcraft.address)
         expect(event.args[4]).to.equal(zexcraft.address)

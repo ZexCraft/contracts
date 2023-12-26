@@ -2,7 +2,6 @@
 pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
@@ -17,7 +16,7 @@ import "./interfaces/ICraftToken.sol";
 contract ZexCraftNFT is ERC721, ERC721URIStorage {
   using ECDSA for bytes32;
   using MessageHashUtils for bytes32;
-  using Strings for uint256;
+
 
   bool public isInitialized;
   uint256 public tokenIdCounter;

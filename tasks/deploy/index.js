@@ -9,12 +9,12 @@ exports.deployTestNFT = require("./deployTestNFT.js")
 
 /* Deploy order 
 
-1. ERC6551 Implementation - npx hardhat deploy-implementation --network polygonMumbai --verify true
-2. ERC6551 Registry - npx hardhat deploy-registry --network polygonMumbai --verify true
-3. Relationship Implementation - npx hardhat deploy-relationship --network polygonMumbai --verify true
-4. Relationship Registry - npx hardhat deploy-relationship-registry --network polygonMumbai --verify true
-5. ZexCraft - npx hardhat deploy-zexcraft --network polygonMumbai --verify true
-6. CraftToken - npx hardhat deploy-craft-token --network polygonMumbai --verify true
+1. ERC6551 Implementation - npx hardhat deploy-implementation --network victionTestnet --verify true
+2. ERC6551 Registry - npx hardhat deploy-registry --network victionTestnet --verify true
+3. Relationship Implementation - npx hardhat deploy-relationship --network victionTestnet --verify true
+4. Relationship Registry - npx hardhat deploy-relationship-registry --network victionTestnet --verify true
+5. ZexCraft - npx hardhat deploy-zexcraft --network victionTestnet --verify true
+6. CraftToken - npx hardhat deploy-craft-token --network victionTestnet --verify true
 
 Call setCraftToken in ZexCraft
 Call initialize in RelRegistry

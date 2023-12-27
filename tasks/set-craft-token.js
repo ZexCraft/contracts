@@ -1,7 +1,7 @@
 const { networks } = require("../networks")
 task("set-craft-token", "Sets Craft Token Address to ZexCraft").setAction(async (taskArgs, hre) => {
   try {
-    const craftToken = "0xC044FCe37927A0Cb55C7e57425Fe3772181228a6"
+    const craftToken = "0x08AC2b69feB202b34aD7c65E5Ac876E901CA6216"
     const functionHash = ethers.utils.id("setCraftToken(address)").slice(0, 10)
     console.log(functionHash)
 

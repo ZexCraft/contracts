@@ -1,8 +1,8 @@
 const { networks } = require("../networks")
 task("initialize-rel-registry", "Initalizes Relationship registry").setAction(async (taskArgs, hre) => {
   try {
-    const craftToken = "0xC044FCe37927A0Cb55C7e57425Fe3772181228a6"
-    const zexCraft = "0xc6b011774FE1393AE254d19456e76F0f1b5B09Eb"
+    const craftToken = "0x08AC2b69feB202b34aD7c65E5Ac876E901CA6216"
+    const zexCraft = "0x50751BD8d7b0a84c422DE96A56426a370F31a42D"
     const functionHash = ethers.utils.id("initialize(address,address)").slice(0, 10)
     console.log(functionHash)
 
